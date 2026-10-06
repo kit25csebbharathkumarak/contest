@@ -89,6 +89,23 @@
             <span class="nav-badge-pill" id="currentContestNavPill">05.10.2026</span>
           </button>
 
+          <button class="nav-tab" data-view="calendar" id="navTabCalendar">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect>
+              <line x1="16" y1="2" x2="16" y2="6"></line>
+              <line x1="8" y1="2" x2="8" y2="6"></line>
+              <line x1="3" y1="10" x2="21" y2="10"></line>
+              <circle cx="8" cy="14" r="1"></circle>
+              <circle cx="12" cy="14" r="1"></circle>
+              <circle cx="16" cy="14" r="1"></circle>
+              <circle cx="8" cy="18" r="1"></circle>
+              <circle cx="12" cy="18" r="1"></circle>
+              <circle cx="16" cy="18" r="1"></circle>
+            </svg>
+            <span>Contest Calendar</span>
+            <span class="nav-badge-calendar" id="navCalendarBadge">4 Platforms</span>
+          </button>
+
           <button class="nav-tab" data-view="admin" id="navTabAdmin">
             <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
               <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"></path>
@@ -878,6 +895,303 @@
         </div>
 
       </div>
+    </div>
+
+    <!-- ================================================================= -->
+    <!-- VIEW 4: CONTEST CALENDAR (LeetCode, CodeChef, Codeforces, AtCoder) -->
+    <!-- ================================================================= -->
+    <div id="viewCalendar" class="portal-view">
+      
+      <!-- Live Clock & Spotlight Next Contest Banner -->
+      <div class="calendar-hero-banner">
+        <div class="calendar-hero-content">
+          <div class="calendar-hero-badge-row">
+            <span class="badge badge-pulse"><span class="pulse-dot"></span> LIVE TIMERS</span>
+            <span class="calendar-ist-clock" id="calendarIstClock">IST: Calculating...</span>
+          </div>
+          <h2 class="calendar-hero-title">Competitive Programming Contest Calendar</h2>
+          <p class="calendar-hero-desc">
+            Live schedules & automated countdowns for <strong>LeetCode</strong>, <strong>CodeChef</strong>, <strong>Codeforces</strong>, and <strong>AtCoder</strong> in Indian Standard Time (IST). Sync to your Google Calendar with one click.
+          </p>
+        </div>
+
+        <!-- Spotlight Next Imminent Contest Card -->
+        <div class="spotlight-contest-card" id="spotlightContestCard">
+          <div class="spotlight-header">
+            <span class="spotlight-label">NEXT UPCOMING CONTEST</span>
+            <span class="spotlight-platform-badge badge-cc" id="spotlightPlatformBadge">CodeChef</span>
+          </div>
+          <h3 class="spotlight-title" id="spotlightTitle">CodeChef Starters 180</h3>
+          <div class="spotlight-time-row">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <circle cx="12" cy="12" r="10"></circle>
+              <polyline points="12 6 12 12 16 14"></polyline>
+            </svg>
+            <span id="spotlightTime">Wed, Oct 7, 2026 • 08:00 PM IST</span>
+          </div>
+          <div class="spotlight-countdown-box">
+            <div class="countdown-digit-block">
+              <span class="digit-val" id="spotlightDays">00</span>
+              <span class="digit-label">DAYS</span>
+            </div>
+            <span class="countdown-separator">:</span>
+            <div class="countdown-digit-block">
+              <span class="digit-val" id="spotlightHours">00</span>
+              <span class="digit-label">HRS</span>
+            </div>
+            <span class="countdown-separator">:</span>
+            <div class="countdown-digit-block">
+              <span class="digit-val" id="spotlightMins">00</span>
+              <span class="digit-label">MIN</span>
+            </div>
+            <span class="countdown-separator">:</span>
+            <div class="countdown-digit-block">
+              <span class="digit-val" id="spotlightSecs">00</span>
+              <span class="digit-label">SEC</span>
+            </div>
+          </div>
+          <div class="spotlight-actions">
+            <a href="https://www.codechef.com/contests" id="spotlightDirectLink" target="_blank" rel="noopener noreferrer" class="btn btn-primary btn-sm">
+              <span>Official Link</span>
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"></path>
+                <polyline points="15 3 21 3 21 9"></polyline>
+                <line x1="10" y1="14" x2="21" y2="3"></line>
+              </svg>
+            </a>
+            <a href="#" id="spotlightGCalBtn" target="_blank" rel="noopener noreferrer" class="btn btn-secondary btn-sm" title="Add to Google Calendar">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect>
+                <line x1="16" y1="2" x2="16" y2="6"></line>
+                <line x1="8" y1="2" x2="8" y2="6"></line>
+                <line x1="3" y1="10" x2="21" y2="10"></line>
+              </svg>
+              <span>Add to G-Cal</span>
+            </a>
+          </div>
+        </div>
+      </div>
+
+      <!-- Quick Metrics Strip -->
+      <div class="metrics-strip">
+        <div class="metric-card">
+          <div class="metric-icon" style="background: rgba(99, 102, 241, 0.15); color: #818cf8;">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect>
+              <line x1="16" y1="2" x2="16" y2="6"></line>
+              <line x1="8" y1="2" x2="8" y2="6"></line>
+              <line x1="3" y1="10" x2="21" y2="10"></line>
+            </svg>
+          </div>
+          <div class="metric-info">
+            <span class="metric-label">Tracked Contests</span>
+            <span class="metric-val" id="metricTotalContests">16</span>
+          </div>
+        </div>
+
+        <div class="metric-card">
+          <div class="metric-icon" style="background: rgba(16, 185, 129, 0.15); color: #10b981;">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <circle cx="12" cy="12" r="10"></circle>
+              <polyline points="12 6 12 12 16 14"></polyline>
+            </svg>
+          </div>
+          <div class="metric-info">
+            <span class="metric-label">Upcoming Rounds</span>
+            <span class="metric-val" id="metricUpcomingContests">11</span>
+          </div>
+        </div>
+
+        <div class="metric-card">
+          <div class="metric-icon" style="background: rgba(244, 63, 94, 0.15); color: #f43f5e;">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <polygon points="5 3 19 12 5 21 5 3"></polygon>
+            </svg>
+          </div>
+          <div class="metric-info">
+            <span class="metric-label">Live Right Now</span>
+            <span class="metric-val text-emerald" id="metricLiveContests">0</span>
+          </div>
+        </div>
+
+        <div class="metric-card">
+          <div class="metric-icon" style="background: rgba(245, 158, 11, 0.15); color: #f59e0b;">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"></polygon>
+            </svg>
+          </div>
+          <div class="metric-info">
+            <span class="metric-label">Active Platforms</span>
+            <span class="metric-val">4 Platforms</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- Controls & Filter Section -->
+      <div class="calendar-controls-card">
+        
+        <!-- Platform Filter Tabs -->
+        <div class="calendar-platforms-bar">
+          <span class="filter-bar-label">Platform:</span>
+          <div class="calendar-platform-tabs" id="calendarPlatformTabs">
+            <button class="cal-platform-tab active" data-platform="all">
+              <span>All Platforms</span>
+              <span class="cal-tab-badge" id="badgeCalCountAll">16</span>
+            </button>
+            <button class="cal-platform-tab tab-lc" data-platform="leetcode">
+              <span class="cal-tab-dot lc-dot"></span>
+              <span>LeetCode</span>
+              <span class="cal-tab-badge" id="badgeCalCountLc">4</span>
+            </button>
+            <button class="cal-platform-tab tab-cc" data-platform="codechef">
+              <span class="cal-tab-dot cc-dot"></span>
+              <span>CodeChef</span>
+              <span class="cal-tab-badge" id="badgeCalCountCc">4</span>
+            </button>
+            <button class="cal-platform-tab tab-cf" data-platform="codeforces">
+              <span class="cal-tab-dot cf-dot"></span>
+              <span>Codeforces</span>
+              <span class="cal-tab-badge" id="badgeCalCountCf">5</span>
+            </button>
+            <button class="cal-platform-tab tab-at" data-platform="atcoder">
+              <span class="cal-tab-dot at-dot"></span>
+              <span>AtCoder</span>
+              <span class="cal-tab-badge" id="badgeCalCountAt">3</span>
+            </button>
+          </div>
+        </div>
+
+        <!-- Timeline & Layout Filters Row -->
+        <div class="calendar-secondary-filters">
+          
+          <!-- Timeline Status Selector -->
+          <div class="filter-dropdown-wrap">
+            <label for="calendarStatusFilter" class="filter-label">Status:</label>
+            <select id="calendarStatusFilter" class="styled-select">
+              <option value="all">All Timelines (Live, Upcoming & Recent)</option>
+              <option value="upcoming" selected>Upcoming Contests Only</option>
+              <option value="live">🔴 Live Now</option>
+              <option value="past">Completed / Past</option>
+            </select>
+          </div>
+
+          <!-- Search Input -->
+          <div class="search-input-wrap cal-search-wrap">
+            <svg class="search-icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <circle cx="11" cy="11" r="8"></circle>
+              <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
+            </svg>
+            <input 
+              type="text" 
+              id="calendarSearchInput" 
+              class="styled-search-input" 
+              placeholder="Search contest by title, round, Div..."
+            >
+            <button id="clearCalendarSearchBtn" class="clear-search-btn" title="Clear search" style="display: none;">&times;</button>
+          </div>
+
+          <!-- View Mode Toggles (Cards vs Calendar Grid) -->
+          <div class="calendar-view-toggle">
+            <button class="view-toggle-btn active" id="calViewToggleCards" title="Cards View">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <rect x="3" y="3" width="7" height="7"></rect>
+                <rect x="14" y="3" width="7" height="7"></rect>
+                <rect x="14" y="14" width="7" height="7"></rect>
+                <rect x="3" y="14" width="7" height="7"></rect>
+              </svg>
+              <span>Cards</span>
+            </button>
+            <button class="view-toggle-btn" id="calViewToggleMonth" title="Monthly Calendar View">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect>
+                <line x1="16" y1="2" x2="16" y2="6"></line>
+                <line x1="8" y1="2" x2="8" y2="6"></line>
+                <line x1="3" y1="10" x2="21" y2="10"></line>
+              </svg>
+              <span>Month Matrix</span>
+            </button>
+          </div>
+
+          <!-- Quick Actions -->
+          <div class="calendar-actions-group">
+            <button id="exportAllIcsBtn" class="btn btn-outline btn-sm" title="Download all contests to Apple Calendar / Outlook / G-Cal (.ics)">
+              <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
+                <polyline points="7 10 12 15 17 10"></polyline>
+                <line x1="12" y1="15" x2="12" y2="3"></line>
+              </svg>
+              <span>Export .ICS</span>
+            </button>
+            <button id="refreshCalendarBtn" class="btn btn-icon btn-sm" title="Refresh Live Contest Feeds">
+              <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <path d="M21.5 2v6h-6M21.34 15.57a10 10 0 1 1-.57-8.38l5.67-5.67"></path>
+              </svg>
+            </button>
+          </div>
+
+        </div>
+
+      </div>
+
+      <!-- VIEW MODE A: CONTEST CARDS GRID -->
+      <div id="calendarCardsContainer" class="calendar-cards-wrapper">
+        <div class="calendar-cards-grid" id="calendarCardsGrid">
+          <!-- Rendered dynamically via JavaScript -->
+        </div>
+      </div>
+
+      <!-- VIEW MODE B: INTERACTIVE MONTH CALENDAR MATRIX -->
+      <div id="calendarMonthContainer" class="calendar-month-wrapper" style="display: none;">
+        <div class="month-matrix-card">
+          <!-- Month Header Controls -->
+          <div class="month-nav-header">
+            <div class="month-nav-title-group">
+              <button id="monthPrevBtn" class="btn btn-icon btn-sm" title="Previous Month">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                  <polyline points="15 18 9 12 15 6"></polyline>
+                </svg>
+              </button>
+              <h3 class="month-display-title" id="monthDisplayTitle">October 2026</h3>
+              <button id="monthNextBtn" class="btn btn-icon btn-sm" title="Next Month">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                  <polyline points="9 18 15 12 9 6"></polyline>
+                </svg>
+              </button>
+            </div>
+            <div class="month-quick-btns">
+              <button id="monthTodayBtn" class="btn btn-outline btn-sm">Jump to Today</button>
+            </div>
+          </div>
+
+          <!-- Days of Week Header -->
+          <div class="calendar-weekdays-row">
+            <div>Sun</div>
+            <div>Mon</div>
+            <div>Tue</div>
+            <div>Wed</div>
+            <div>Thu</div>
+            <div>Fri</div>
+            <div>Sat</div>
+          </div>
+
+          <!-- Calendar Days Grid -->
+          <div class="calendar-days-grid" id="calendarDaysGrid">
+            <!-- Rendered dynamically via JavaScript -->
+          </div>
+
+          <!-- Selected Day Contests Detail Drawer -->
+          <div class="selected-day-drawer" id="selectedDayDrawer">
+            <div class="day-drawer-header">
+              <h4 class="day-drawer-title" id="selectedDayTitle">Contests for October 7, 2026</h4>
+              <span class="day-drawer-count" id="selectedDayContestsCount">1 Contest</span>
+            </div>
+            <div class="day-drawer-list" id="selectedDayContestsList">
+              <!-- Rendered dynamically -->
+            </div>
+          </div>
+        </div>
+      </div>
+
     </div>
 
     <!-- Footer -->

@@ -554,6 +554,8 @@ window.switchView = function(viewName) {
   document.getElementById("viewOverall").classList.toggle("active", viewName === "overall");
   document.getElementById("viewContest").classList.toggle("active", viewName === "contest");
   document.getElementById("viewAdmin").classList.toggle("active", viewName === "admin");
+  const calView = document.getElementById("viewCalendar");
+  if (calView) calView.classList.toggle("active", viewName === "calendar");
 
   if (viewName === "overall") {
     applyOverallFilters();
@@ -561,6 +563,8 @@ window.switchView = function(viewName) {
     applyContestFilters();
   } else if (viewName === "admin") {
     renderAdminPortal();
+  } else if (viewName === "calendar") {
+    renderContestCalendar();
   }
 };
 
@@ -1263,6 +1267,8 @@ function setupEventListeners() {
   document.getElementById("navTabOverall").addEventListener("click", () => switchView("overall"));
   document.getElementById("navTabContest").addEventListener("click", () => switchView("contest"));
   document.getElementById("navTabAdmin").addEventListener("click", () => switchView("admin"));
+  const navTabCal = document.getElementById("navTabCalendar");
+  if (navTabCal) navTabCal.addEventListener("click", () => switchView("calendar"));
 
   // Overall Controls
   const overallSearch = document.getElementById("overallSearchInput");
@@ -1432,6 +1438,9 @@ function setupEventListeners() {
       closeSheetConfigModal();
     }
   });
+
+  // Contest Calendar Event Listeners
+  setupCalendarEventListeners();
 }
 
 // Live Client-Side Auto-Sync Function
@@ -1517,7 +1526,963 @@ async function triggerLiveAutoSync() {
 }
 
 // ==========================================
-// 10. INITIALIZATION
+// 10. CONTEST CALENDAR LOGIC (LeetCode, CodeChef, Codeforces, AtCoder)
+// ==========================================
+
+let calSelectedPlatform = "all";
+let calSelectedStatus = "upcoming";
+let calSearchQuery = "";
+let calViewMode = "cards"; // 'cards' | 'month'
+
+// Monthly Calendar state
+const calCurrentDate = new Date();
+let calViewYear = calCurrentDate.getFullYear();
+let calViewMonth = calCurrentDate.getMonth();
+let calSelectedDateKey = null; // 'YYYY-MM-DD'
+
+let masterContests = [];
+let calLiveTimerId = null;
+
+function getPlatformBadgeClass(p) {
+  if (p === "leetcode") return "lc";
+  if (p === "codechef") return "cc";
+  if (p === "codeforces") return "cf";
+  if (p === "atcoder") return "at";
+  return "all";
+}
+
+function getPlatformIcon(p) {
+  if (p === "leetcode") {
+    return `<svg width="15" height="15" viewBox="0 0 24 24" fill="currentColor"><path d="M13.483 0a1.374 1.374 0 0 0-.961.438L7.116 6.226l-3.854 4.126a5.266 5.266 0 0 0-1.209 2.104 5.35 5.35 0 0 0-.125.513 5.527 5.527 0 0 0 .062 2.362 5.83 5.83 0 0 0 .349 1.017 5.938 5.938 0 0 0 1.271 1.818l4.277 4.193.039.038c2.248 2.165 5.852 2.133 8.063-.074l2.396-2.392c.54-.54.54-1.414.003-1.955a1.378 1.378 0 0 0-1.951-.003l-2.396 2.392a3.021 3.021 0 0 1-4.28.038l-4.281-4.196a3.08 3.08 0 0 1-.663-.948 2.87 2.87 0 0 1-.182-.53 3.02 3.02 0 0 1-.03-.984 2.923 2.923 0 0 1 .632-1.096l3.853-4.128 5.4-5.782a1.38 1.38 0 0 0-.965-2.333zm4.184 10.742h-7.662c-.76 0-1.378.618-1.378 1.378 0 .76.618 1.378 1.378 1.378h7.662c.76 0 1.378-.618 1.378-1.378 0-.76-.618-1.378-1.378-1.378z"/></svg>`;
+  }
+  if (p === "codechef") {
+    return `<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 13.87A4 4 0 0 1 7.41 6a5.11 5.11 0 0 1 1.05-1.54 5 5 0 0 1 7.08 0A5.11 5.11 0 0 1 16.59 6 4 4 0 0 1 18 13.87V21H6z"/><line x1="6" y1="17" x2="18" y2="17"/></svg>`;
+  }
+  if (p === "codeforces") {
+    return `<svg width="15" height="15" viewBox="0 0 24 24" fill="currentColor"><path d="M4.5 7.5a1.5 1.5 0 0 1 1.5 1.5v10.5a1.5 1.5 0 0 1-3 0V9a1.5 1.5 0 0 1 1.5-1.5zm7.5-4.5a1.5 1.5 0 0 1 1.5 1.5v15a1.5 1.5 0 0 1-3 0V4.5a1.5 1.5 0 0 1 1.5-1.5zm7.5 7.5a1.5 1.5 0 0 1 1.5 1.5v7.5a1.5 1.5 0 0 1-3 0V12a1.5 1.5 0 0 1 1.5-1.5z"/></svg>`;
+  }
+  if (p === "atcoder") {
+    return `<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="12 2 2 22 22 22 12 2"/><line x1="6.5" y1="15" x2="17.5" y2="15"/></svg>`;
+  }
+  return `<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/></svg>`;
+}
+
+function generateBaseContests() {
+  const contests = [];
+  const now = new Date();
+  const curYear = now.getFullYear();
+  const curMonth = now.getMonth();
+  const curDate = now.getDate();
+
+  // Helper date creator
+  function dateOffsetDays(days, hour, minute) {
+    const d = new Date(curYear, curMonth, curDate);
+    d.setDate(d.getDate() + days);
+    d.setHours(hour, minute, 0, 0);
+    return d;
+  }
+
+  // --- 1. CODECHEF (Every Wednesday 20:00 - 22:00 IST) ---
+  for (let w = -2; w <= 5; w++) {
+    const d = new Date(curYear, curMonth, curDate);
+    const dayOfWeek = d.getDay(); // 0 is Sun, 3 is Wed
+    const diffToWed = 3 - dayOfWeek + (w * 7);
+    const start = dateOffsetDays(diffToWed, 20, 0);
+    const end = dateOffsetDays(diffToWed, 22, 0);
+    const roundNum = 180 + w;
+
+    contests.push({
+      id: `cc_starters_${roundNum}`,
+      platform: "codechef",
+      platformName: "CodeChef",
+      title: `CodeChef Starters ${roundNum} (Div. 2, 3 & 4)`,
+      startTime: start,
+      endTime: end,
+      durationMinutes: 120,
+      durationLabel: "2 Hours",
+      rated: "Rated Div 2, 3 & 4",
+      type: "Starters Round",
+      url: `https://www.codechef.com/START${roundNum}`,
+      description: `CodeChef Starters ${roundNum}. 8 problems across Divisions 2, 3, and 4. ICPC-style short algorithmic battle.`
+    });
+  }
+
+  // --- 2. LEETCODE ---
+  // Weekly Contest (Every Sunday 08:00 - 09:30 AM IST)
+  for (let w = -2; w <= 5; w++) {
+    const d = new Date(curYear, curMonth, curDate);
+    const dayOfWeek = d.getDay(); // 0 is Sun
+    const diffToSun = (0 - dayOfWeek + 7) % 7 + (w * 7);
+    const start = dateOffsetDays(diffToSun, 8, 0);
+    const end = dateOffsetDays(diffToSun, 9, 30);
+    const roundNum = 445 + w;
+
+    contests.push({
+      id: `lc_weekly_${roundNum}`,
+      platform: "leetcode",
+      platformName: "LeetCode",
+      title: `LeetCode Weekly Contest ${roundNum}`,
+      startTime: start,
+      endTime: end,
+      durationMinutes: 90,
+      durationLabel: "1 Hr 30 Min",
+      rated: "Rated for All",
+      type: "Weekly Contest",
+      url: `https://leetcode.com/contest/weekly-contest-${roundNum}`,
+      description: `LeetCode Weekly Contest ${roundNum}. 4 algorithmic problems (1 Easy, 2 Medium, 1 Hard). Penalty: 5 min per wrong submission.`
+    });
+  }
+
+  // Biweekly Contest (Alternate Saturdays 20:00 - 21:30 IST)
+  for (let w = -2; w <= 6; w += 2) {
+    const d = new Date(curYear, curMonth, curDate);
+    const dayOfWeek = d.getDay(); // 6 is Sat
+    const diffToSat = (6 - dayOfWeek + 7) % 7 + (w * 7);
+    const start = dateOffsetDays(diffToSat, 20, 0);
+    const end = dateOffsetDays(diffToSat, 21, 30);
+    const roundNum = 154 + Math.floor(w / 2);
+
+    contests.push({
+      id: `lc_biweekly_${roundNum}`,
+      platform: "leetcode",
+      platformName: "LeetCode",
+      title: `LeetCode Biweekly Contest ${roundNum}`,
+      startTime: start,
+      endTime: end,
+      durationMinutes: 90,
+      durationLabel: "1 Hr 30 Min",
+      rated: "Rated for All",
+      type: "Biweekly Contest",
+      url: `https://leetcode.com/contest/biweekly-contest-${roundNum}`,
+      description: `LeetCode Biweekly Contest ${roundNum}. 4 challenging DSA problems. Official global rating updates.`
+    });
+  }
+
+  // --- 3. CODEFORCES ---
+  // Div 2 / Div 3 / Educational rounds on Thursdays and Tuesdays
+  for (let w = -2; w <= 5; w++) {
+    // Thursday round
+    const dThu = new Date(curYear, curMonth, curDate);
+    const diffToThu = (4 - dThu.getDay() + 7) % 7 + (w * 7);
+    const startThu = dateOffsetDays(diffToThu, 20, 5);
+    const endThu = dateOffsetDays(diffToThu, 22, 20);
+    const roundThu = 1014 + w;
+
+    contests.push({
+      id: `cf_round_${roundThu}`,
+      platform: "codeforces",
+      platformName: "Codeforces",
+      title: `Codeforces Round ${roundThu} (Div. 2)`,
+      startTime: startThu,
+      endTime: endThu,
+      durationMinutes: 135,
+      durationLabel: "2 Hr 15 Min",
+      rated: "Rated for Div. 2",
+      type: "Div. 2 Round",
+      url: `https://codeforces.com/contests`,
+      description: `Official Codeforces Round ${roundThu} (Div. 2). 5-6 problems, ICPC format with pretests & hacking phase.`
+    });
+
+    // Alternate Tuesday Educational Round
+    if (w % 2 === 0) {
+      const dTue = new Date(curYear, curMonth, curDate);
+      const diffToTue = (2 - dTue.getDay() + 7) % 7 + (w * 7);
+      const startTue = dateOffsetDays(diffToTue, 20, 5);
+      const endTue = dateOffsetDays(diffToTue, 22, 5);
+      const eduRound = 175 + Math.floor(w / 2);
+
+      contests.push({
+        id: `cf_edu_${eduRound}`,
+        platform: "codeforces",
+        platformName: "Codeforces",
+        title: `Educational Codeforces Round ${eduRound} (Div. 2)`,
+        startTime: startTue,
+        endTime: endTue,
+        durationMinutes: 120,
+        durationLabel: "2 Hours",
+        rated: "Rated for Div. 2",
+        type: "Educational Round",
+        url: `https://codeforces.com/contests`,
+        description: `Educational Codeforces Round ${eduRound}. Focused on standard algorithms, data structures, and rigorous implementation.`
+      });
+    }
+  }
+
+  // --- 4. ATCODER ---
+  // AtCoder Beginner Contest (ABC) every Saturday at 17:30 - 19:10 IST (21:00 JST)
+  for (let w = -2; w <= 5; w++) {
+    const d = new Date(curYear, curMonth, curDate);
+    const diffToSat = (6 - d.getDay() + 7) % 7 + (w * 7);
+    const start = dateOffsetDays(diffToSat, 17, 30);
+    const end = dateOffsetDays(diffToSat, 19, 10);
+    const roundNum = 397 + w;
+
+    contests.push({
+      id: `at_abc_${roundNum}`,
+      platform: "atcoder",
+      platformName: "AtCoder",
+      title: `AtCoder Beginner Contest ${roundNum} (ABC ${roundNum})`,
+      startTime: start,
+      endTime: end,
+      durationMinutes: 100,
+      durationLabel: "1 Hr 40 Min",
+      rated: "Rated for < 2000",
+      type: "ABC Round",
+      url: `https://atcoder.jp/contests/abc${roundNum}`,
+      description: `AtCoder Beginner Contest ${roundNum}. 7-8 problems (A to G/Ex) of increasing difficulty. High quality competitive programming.`
+    });
+  }
+
+  contests.sort((a, b) => a.startTime.getTime() - b.startTime.getTime());
+  return contests;
+}
+
+async function fetchOnlineCodeforcesContests() {
+  try {
+    const res = await fetch("https://codeforces.com/api/contest.list?gym=false");
+    if (!res.ok) return;
+    const data = await res.json();
+    if (data.status === "OK" && Array.isArray(data.result)) {
+      const cfUpcoming = data.result.filter(c => c.phase === "BEFORE" || c.phase === "CODING");
+      if (cfUpcoming.length > 0) {
+        cfUpcoming.forEach(c => {
+          const start = new Date(c.startTimeSeconds * 1000);
+          const end = new Date((c.startTimeSeconds + c.durationSeconds) * 1000);
+          const cid = `cf_api_${c.id}`;
+          
+          const existingIdx = masterContests.findIndex(m => m.id === cid || m.title === c.name);
+          const durationMins = Math.round(c.durationSeconds / 60);
+          const durHours = (durationMins / 60).toFixed(1).replace(".0", "");
+
+          const item = {
+            id: cid,
+            platform: "codeforces",
+            platformName: "Codeforces",
+            title: c.name,
+            startTime: start,
+            endTime: end,
+            durationMinutes: durationMins,
+            durationLabel: `${durHours} Hours`,
+            rated: c.name.includes("Div. 1") ? "Rated Div 1" : c.name.includes("Div. 3") ? "Rated Div 3" : "Rated Div 2",
+            type: c.type || "Codeforces Round",
+            url: `https://codeforces.com/contest/${c.id}`,
+            description: `Live official round from Codeforces: ${c.name}. Format: ${c.type}.`
+          };
+
+          if (existingIdx >= 0) {
+            masterContests[existingIdx] = item;
+          } else {
+            masterContests.push(item);
+          }
+        });
+        masterContests.sort((a, b) => a.startTime.getTime() - b.startTime.getTime());
+        renderContestCalendar();
+      }
+    }
+  } catch (err) {
+    // Graceful offline fallback
+    console.log("Offline schedule active:", err.message);
+  }
+}
+
+function getContestStatus(contest) {
+  const now = new Date().getTime();
+  const start = new Date(contest.startTime).getTime();
+  const end = new Date(contest.endTime).getTime();
+
+  if (now < start) return "upcoming";
+  if (now >= start && now <= end) return "live";
+  return "past";
+}
+
+function formatTimeRemaining(ms) {
+  if (ms <= 0) return "00s";
+  const totalSeconds = Math.floor(ms / 1000);
+  const days = Math.floor(totalSeconds / 86400);
+  const hours = Math.floor((totalSeconds % 86400) / 3600);
+  const minutes = Math.floor((totalSeconds % 3600) / 60);
+  const seconds = totalSeconds % 60;
+
+  const pad = (n) => String(n).padStart(2, "0");
+
+  if (days > 0) {
+    return `${days}d ${pad(hours)}h ${pad(minutes)}m ${pad(seconds)}s`;
+  }
+  return `${pad(hours)}h ${pad(minutes)}m ${pad(seconds)}s`;
+}
+
+function formatContestDateIst(date) {
+  const d = new Date(date);
+  return d.toLocaleString("en-IN", {
+    weekday: "short",
+    day: "2-digit",
+    month: "short",
+    year: "numeric",
+    hour: "2-digit",
+    minute: "2-digit",
+    hour12: true,
+    timeZone: "Asia/Kolkata"
+  }) + " IST";
+}
+
+function formatUtcForGCal(date) {
+  const d = new Date(date);
+  return d.toISOString().replace(/-|:|\.\d\d\d/g, "");
+}
+
+function generateGoogleCalendarUrl(contest) {
+  const startUtc = formatUtcForGCal(contest.startTime);
+  const endUtc = formatUtcForGCal(contest.endTime);
+  const title = encodeURIComponent(`[${contest.platformName}] ${contest.title}`);
+  const details = encodeURIComponent(
+    `${contest.title}\n\nPlatform: ${contest.platformName}\nDuration: ${contest.durationLabel}\nRated: ${contest.rated}\nOfficial URL: ${contest.url}\n\nSynced from CampusCP Portal.`
+  );
+  const location = encodeURIComponent(contest.url);
+  return `https://calendar.google.com/calendar/render?action=TEMPLATE&text=${title}&dates=${startUtc}/${endUtc}&details=${details}&location=${location}`;
+}
+
+function exportAllContestsIcs() {
+  const upcomingContests = masterContests.filter(c => getContestStatus(c) !== "past");
+  const listToExport = upcomingContests.length > 0 ? upcomingContests : masterContests;
+
+  let ics = "BEGIN:VCALENDAR\r\nVERSION:2.0\r\nPRODID:-//CampusCP//Contest Calendar//EN\r\nCALSCALE:GREGORIAN\r\nMETHOD:PUBLISH\r\nX-WR-CALNAME:Competitive Programming Contests\r\nX-WR-TIMEZONE:Asia/Kolkata\r\n";
+  
+  listToExport.forEach(c => {
+    const sStr = formatUtcForGCal(c.startTime);
+    const eStr = formatUtcForGCal(c.endTime);
+    const uid = `${c.id}@campuscpportal.edu`;
+    const summary = `[${c.platformName}] ${c.title}`.replace(/,/g, "\\,");
+    const desc = `${c.title}\\nPlatform: ${c.platformName}\\nDuration: ${c.durationLabel}\\nLink: ${c.url}`.replace(/,/g, "\\,");
+    
+    ics += `BEGIN:VEVENT\r\nUID:${uid}\r\nDTSTAMP:${formatUtcForGCal(new Date())}\r\nDTSTART:${sStr}\r\nDTEND:${eStr}\r\nSUMMARY:${summary}\r\nDESCRIPTION:${desc}\r\nURL:${c.url}\r\nSTATUS:CONFIRMED\r\nEND:VEVENT\r\n`;
+  });
+  ics += "END:VCALENDAR\r\n";
+
+  const blob = new Blob([ics], { type: "text/calendar;charset=utf-8" });
+  const link = document.createElement("a");
+  link.href = URL.createObjectURL(blob);
+  link.setAttribute("download", "CampusCP_Contests_Schedule.ics");
+  document.body.appendChild(link);
+  link.click();
+  document.body.removeChild(link);
+  showToast(`Exported ${listToExport.length} contests to CampusCP_Contests_Schedule.ics!`, true);
+}
+
+function downloadSingleContestIcs(contestId) {
+  const c = masterContests.find(item => item.id === contestId);
+  if (!c) return;
+
+  const sStr = formatUtcForGCal(c.startTime);
+  const eStr = formatUtcForGCal(c.endTime);
+  const uid = `${c.id}@campuscpportal.edu`;
+  const summary = `[${c.platformName}] ${c.title}`.replace(/,/g, "\\,");
+  const desc = `${c.title}\\nPlatform: ${c.platformName}\\nDuration: ${c.durationLabel}\\nLink: ${c.url}`.replace(/,/g, "\\,");
+
+  let ics = `BEGIN:VCALENDAR\r\nVERSION:2.0\r\nPRODID:-//CampusCP//Contest Calendar//EN\r\nCALSCALE:GREGORIAN\r\nMETHOD:PUBLISH\r\nBEGIN:VEVENT\r\nUID:${uid}\r\nDTSTAMP:${formatUtcForGCal(new Date())}\r\nDTSTART:${sStr}\r\nDTEND:${eStr}\r\nSUMMARY:${summary}\r\nDESCRIPTION:${desc}\r\nURL:${c.url}\r\nSTATUS:CONFIRMED\r\nEND:VEVENT\r\nEND:VCALENDAR\r\n`;
+
+  const blob = new Blob([ics], { type: "text/calendar;charset=utf-8" });
+  const link = document.createElement("a");
+  link.href = URL.createObjectURL(blob);
+  link.setAttribute("download", `${c.id}.ics`);
+  document.body.appendChild(link);
+  link.click();
+  document.body.removeChild(link);
+  showToast(`Downloaded event .ICS for ${c.platformName}!`, true);
+}
+
+function copyContestDetails(contestId) {
+  const c = masterContests.find(item => item.id === contestId);
+  if (!c) return;
+  const text = `🏆 ${c.title}\n📅 ${formatContestDateIst(c.startTime)} (${c.durationLabel})\n⭐ ${c.rated}\n🔗 Link: ${c.url}`;
+  if (navigator.clipboard) {
+    navigator.clipboard.writeText(text).then(() => {
+      showToast(`Copied ${c.platformName} contest details!`, true);
+    });
+  } else {
+    showToast(`Contest: ${c.title}`, true);
+  }
+}
+
+// Make available globally for inline onclick
+window.downloadSingleContestIcs = downloadSingleContestIcs;
+window.copyContestDetails = copyContestDetails;
+
+function initContestCalendar() {
+  masterContests = generateBaseContests();
+  if (calLiveTimerId) clearInterval(calLiveTimerId);
+  calLiveTimerId = setInterval(updateContestLiveTimers, 1000);
+  updateContestLiveTimers();
+  renderContestCalendar();
+  fetchOnlineCodeforcesContests();
+}
+
+function updateContestLiveTimers() {
+  const now = new Date();
+  
+  // 1. Update IST Digital Clock in Header Banner
+  const timeStr = now.toLocaleTimeString("en-IN", { hour12: true, timeZone: "Asia/Kolkata" });
+  const dateStr = now.toLocaleDateString("en-IN", { weekday: "short", day: "2-digit", month: "short", year: "numeric", timeZone: "Asia/Kolkata" });
+  const clockEl = document.getElementById("calendarIstClock");
+  if (clockEl) clockEl.textContent = `IST: ${dateStr} • ${timeStr}`;
+
+  // 2. Find Next Imminent Contest for Spotlight Banner
+  const upcomingOrLive = masterContests
+    .filter(c => getContestStatus(c) === "live" || getContestStatus(c) === "upcoming")
+    .sort((a, b) => new Date(a.startTime).getTime() - new Date(b.startTime).getTime());
+
+  const spotlight = upcomingOrLive[0] || masterContests[0];
+  if (spotlight) {
+    const sStatus = getContestStatus(spotlight);
+    const targetTime = sStatus === "live" ? new Date(spotlight.endTime).getTime() : new Date(spotlight.startTime).getTime();
+    const diff = Math.max(0, targetTime - now.getTime());
+
+    const totalSeconds = Math.floor(diff / 1000);
+    const days = Math.floor(totalSeconds / 86400);
+    const hours = Math.floor((totalSeconds % 86400) / 3600);
+    const minutes = Math.floor((totalSeconds % 3600) / 60);
+    const seconds = totalSeconds % 60;
+
+    const pad = n => String(n).padStart(2, "0");
+    const dEl = document.getElementById("spotlightDays");
+    const hEl = document.getElementById("spotlightHours");
+    const mEl = document.getElementById("spotlightMins");
+    const sEl = document.getElementById("spotlightSecs");
+
+    if (dEl) dEl.textContent = pad(days);
+    if (hEl) hEl.textContent = pad(hours);
+    if (mEl) mEl.textContent = pad(minutes);
+    if (sEl) sEl.textContent = pad(seconds);
+
+    const titleEl = document.getElementById("spotlightTitle");
+    const badgeEl = document.getElementById("spotlightPlatformBadge");
+    const timeEl = document.getElementById("spotlightTime");
+    const linkEl = document.getElementById("spotlightDirectLink");
+    const gcalEl = document.getElementById("spotlightGCalBtn");
+
+    if (titleEl) titleEl.textContent = spotlight.title;
+    if (badgeEl) {
+      badgeEl.textContent = spotlight.platformName;
+      badgeEl.className = `spotlight-platform-badge badge-${getPlatformBadgeClass(spotlight.platform)}`;
+    }
+    if (timeEl) timeEl.textContent = formatContestDateIst(spotlight.startTime);
+    if (linkEl) linkEl.href = spotlight.url;
+    if (gcalEl) gcalEl.href = generateGoogleCalendarUrl(spotlight);
+  }
+
+  // 3. Update all ticking timers on rendered cards
+  masterContests.forEach(c => {
+    const timerSpan = document.getElementById(`timer_${c.id}`);
+    if (timerSpan) {
+      const status = getContestStatus(c);
+      if (status === "live") {
+        const left = Math.max(0, new Date(c.endTime).getTime() - now.getTime());
+        timerSpan.textContent = `Ends in ${formatTimeRemaining(left)}`;
+      } else if (status === "upcoming") {
+        const left = Math.max(0, new Date(c.startTime).getTime() - now.getTime());
+        timerSpan.textContent = formatTimeRemaining(left);
+      } else {
+        timerSpan.textContent = "Concluded";
+      }
+    }
+  });
+}
+
+function renderContestCalendar() {
+  // Update Metrics
+  const total = masterContests.length;
+  const upcomingCount = masterContests.filter(c => getContestStatus(c) === "upcoming").length;
+  const liveCount = masterContests.filter(c => getContestStatus(c) === "live").length;
+
+  const totalEl = document.getElementById("metricTotalContests");
+  const upEl = document.getElementById("metricUpcomingContests");
+  const liveEl = document.getElementById("metricLiveContests");
+  if (totalEl) totalEl.textContent = total;
+  if (upEl) upEl.textContent = upcomingCount;
+  if (liveEl) {
+    liveEl.textContent = liveCount;
+    liveEl.className = liveCount > 0 ? "metric-val text-emerald" : "metric-val";
+  }
+
+  // Update Navigation Tab Badge
+  const navBadge = document.getElementById("navCalendarBadge");
+  if (navBadge) {
+    if (liveCount > 0) {
+      navBadge.textContent = `${liveCount} Live Now`;
+      navBadge.style.color = "#f87171";
+      navBadge.style.borderColor = "rgba(239, 68, 68, 0.4)";
+    } else {
+      navBadge.textContent = `${upcomingCount} Upcoming`;
+      navBadge.style.color = "#38bdf8";
+      navBadge.style.borderColor = "rgba(56, 189, 248, 0.35)";
+    }
+  }
+
+  // Update Platform Tab Badges
+  const lcCount = masterContests.filter(c => c.platform === "leetcode").length;
+  const ccCount = masterContests.filter(c => c.platform === "codechef").length;
+  const cfCount = masterContests.filter(c => c.platform === "codeforces").length;
+  const atCount = masterContests.filter(c => c.platform === "atcoder").length;
+
+  const bAll = document.getElementById("badgeCalCountAll");
+  const bLc = document.getElementById("badgeCalCountLc");
+  const bCc = document.getElementById("badgeCalCountCc");
+  const bCf = document.getElementById("badgeCalCountCf");
+  const bAt = document.getElementById("badgeCalCountAt");
+
+  if (bAll) bAll.textContent = total;
+  if (bLc) bLc.textContent = lcCount;
+  if (bCc) bCc.textContent = ccCount;
+  if (bCf) bCf.textContent = cfCount;
+  if (bAt) bAt.textContent = atCount;
+
+  // Render chosen view
+  if (calViewMode === "cards") {
+    renderCalendarCards();
+  } else {
+    renderCalendarMonth();
+  }
+}
+
+function renderCalendarCards() {
+  const grid = document.getElementById("calendarCardsGrid");
+  if (!grid) return;
+
+  const now = new Date().getTime();
+
+  // Filter masterContests
+  const filtered = masterContests.filter(c => {
+    // Platform filter
+    if (calSelectedPlatform !== "all" && c.platform !== calSelectedPlatform) {
+      return false;
+    }
+
+    // Status filter
+    const status = getContestStatus(c);
+    if (calSelectedStatus === "upcoming" && status !== "upcoming") return false;
+    if (calSelectedStatus === "live" && status !== "live") return false;
+    if (calSelectedStatus === "past" && status !== "past") return false;
+
+    // Search query
+    if (calSearchQuery) {
+      const match = c.title.toLowerCase().includes(calSearchQuery) ||
+                    c.platformName.toLowerCase().includes(calSearchQuery) ||
+                    c.rated.toLowerCase().includes(calSearchQuery) ||
+                    c.type.toLowerCase().includes(calSearchQuery);
+      if (!match) return false;
+    }
+
+    return true;
+  });
+
+  if (filtered.length === 0) {
+    grid.innerHTML = `
+      <div class="empty-state-card" style="grid-column: 1 / -1; padding: 40px; text-align: center; background: var(--bg-card); border-radius: var(--radius-lg); border: 1px dashed rgba(255,255,255,0.1);">
+        <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" style="margin: 0 auto 12px; color: var(--text-dim);">
+          <rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect>
+          <line x1="16" y1="2" x2="16" y2="6"></line>
+          <line x1="8" y1="2" x2="8" y2="6"></line>
+          <line x1="3" y1="10" x2="21" y2="10"></line>
+        </svg>
+        <h4 style="color: #fff; margin-bottom: 6px;">No Contests Found</h4>
+        <p style="color: var(--text-muted); font-size: 0.88rem;">No contests match the selected filter criteria. Try choosing 'All Platforms' or 'All Timelines'.</p>
+      </div>
+    `;
+    return;
+  }
+
+  grid.innerHTML = filtered.map(c => {
+    const status = getContestStatus(c);
+    const startMs = new Date(c.startTime).getTime();
+    const endMs = new Date(c.endTime).getTime();
+
+    let countdownText = "";
+    if (status === "live") {
+      countdownText = `Ends in ${formatTimeRemaining(endMs - now)}`;
+    } else if (status === "upcoming") {
+      countdownText = formatTimeRemaining(startMs - now);
+    } else {
+      countdownText = "Concluded";
+    }
+
+    const gcalUrl = generateGoogleCalendarUrl(c);
+
+    return `
+      <div class="contest-item-card platform-${getPlatformBadgeClass(c.platform)} is-${status}">
+        <div class="contest-card-header">
+          <span class="contest-platform-tag platform-tag-${getPlatformBadgeClass(c.platform)}">
+            ${getPlatformIcon(c.platform)}
+            <span>${c.platformName}</span>
+          </span>
+          <span class="contest-status-pill status-pill-${status}">
+            ${status === 'live' ? '<span class="pulse-dot" style="background:#ef4444;box-shadow:0 0 8px #ef4444;"></span> LIVE NOW' : status === 'upcoming' ? '⏰ UPCOMING' : '🏁 CONCLUDED'}
+          </span>
+        </div>
+
+        <div class="contest-card-body">
+          <h3 class="contest-card-title">${escapeHtml(c.title)}</h3>
+          
+          <div class="contest-schedule-meta">
+            <div class="contest-meta-row">
+              <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <circle cx="12" cy="12" r="10"></circle>
+                <polyline points="12 6 12 12 16 14"></polyline>
+              </svg>
+              <span>${formatContestDateIst(c.startTime)}</span>
+            </div>
+            
+            <div class="contest-chips-wrap">
+              <span class="contest-pill-chip">⏱️ ${c.durationLabel}</span>
+              <span class="contest-pill-chip">⭐ ${c.rated}</span>
+              <span class="contest-pill-chip">📌 ${c.type}</span>
+            </div>
+          </div>
+
+          <div class="contest-card-countdown">
+            <span class="card-countdown-label">${status === 'live' ? 'Time Remaining' : status === 'upcoming' ? 'Starts In' : 'Status'}</span>
+            <span class="card-countdown-timer" id="timer_${c.id}">${countdownText}</span>
+          </div>
+        </div>
+
+        <div class="contest-card-actions">
+          <a href="${c.url}" target="_blank" rel="noopener noreferrer" class="btn-official-card">
+            <span>Official Link</span>
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"></path>
+              <polyline points="15 3 21 3 21 9"></polyline>
+              <line x1="10" y1="14" x2="21" y2="3"></line>
+            </svg>
+          </a>
+          
+          <a href="${gcalUrl}" target="_blank" rel="noopener noreferrer" class="btn-gcal-card" title="Add to Google Calendar">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect>
+              <line x1="16" y1="2" x2="16" y2="6"></line>
+              <line x1="8" y1="2" x2="8" y2="6"></line>
+              <line x1="3" y1="10" x2="21" y2="10"></line>
+            </svg>
+            <span>G-Cal</span>
+          </a>
+
+          <button class="btn-card-icon" onclick="copyContestDetails('${c.id}')" title="Copy Contest Schedule & Link">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect>
+              <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path>
+            </svg>
+          </button>
+
+          <button class="btn-card-icon" onclick="downloadSingleContestIcs('${c.id}')" title="Download .ICS Calendar Event">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
+              <polyline points="7 10 12 15 17 10"></polyline>
+              <line x1="12" y1="15" x2="12" y2="3"></line>
+            </svg>
+          </button>
+        </div>
+      </div>
+    `;
+  }).join("");
+}
+
+function renderCalendarMonth() {
+  const monthTitle = document.getElementById("monthDisplayTitle");
+  const daysGrid = document.getElementById("calendarDaysGrid");
+  if (!monthTitle || !daysGrid) return;
+
+  const monthNames = [
+    "January", "February", "March", "April", "May", "June",
+    "July", "August", "September", "October", "November", "December"
+  ];
+  monthTitle.textContent = `${monthNames[calViewMonth]} ${calViewYear}`;
+
+  const today = new Date();
+  const todayYear = today.getFullYear();
+  const todayMonth = today.getMonth();
+  const todayDate = today.getDate();
+
+  const firstDayIndex = new Date(calViewYear, calViewMonth, 1).getDay(); // 0 is Sun
+  const totalDaysInMonth = new Date(calViewYear, calViewMonth + 1, 0).getDate();
+  const prevMonthTotalDays = new Date(calViewYear, calViewMonth, 0).getDate();
+
+  let html = "";
+
+  // Helper date key
+  const toDateKey = (y, m, d) => `${y}-${String(m + 1).padStart(2, "0")}-${String(d).padStart(2, "0")}`;
+
+  // 1. Previous Month Inactive Days
+  for (let i = firstDayIndex - 1; i >= 0; i--) {
+    const d = prevMonthTotalDays - i;
+    html += `
+      <div class="calendar-day-cell is-inactive-month">
+        <div class="day-cell-top">
+          <span class="day-cell-number">${d}</span>
+        </div>
+      </div>
+    `;
+  }
+
+  // 2. Current Month Active Days
+  for (let day = 1; day <= totalDaysInMonth; day++) {
+    const isToday = (day === todayDate && calViewMonth === todayMonth && calViewYear === todayYear);
+    const dateKey = toDateKey(calViewYear, calViewMonth, day);
+    const isSelected = (calSelectedDateKey === dateKey);
+
+    // Filter contests on this day
+    const dayContests = masterContests.filter(c => {
+      const cStart = new Date(c.startTime);
+      return cStart.getFullYear() === calViewYear &&
+             cStart.getMonth() === calViewMonth &&
+             cStart.getDate() === day;
+    });
+
+    const hasContests = dayContests.length > 0;
+    const cellClass = `calendar-day-cell ${isToday ? "is-today" : ""} ${isSelected ? "is-selected" : ""} ${hasContests ? "has-contests" : ""}`;
+
+    const eventsHtml = dayContests.slice(0, 3).map(c => {
+      const pClass = getPlatformBadgeClass(c.platform);
+      const shortName = c.platform === "leetcode" ? "LC" : c.platform === "codechef" ? "CC" : c.platform === "codeforces" ? "CF" : "AT";
+      return `
+        <div class="day-event-pill pill-${pClass}" title="${escapeHtml(c.title)}">
+          <span>${shortName}:</span> ${escapeHtml(c.title)}
+        </div>
+      `;
+    }).join("");
+
+    const moreHtml = dayContests.length > 3 ? `<span style="font-size:0.65rem; color:var(--text-dim);">+${dayContests.length - 3} more</span>` : "";
+
+    html += `
+      <div class="${cellClass}" data-date="${dateKey}" onclick="selectCalendarDay('${dateKey}', ${day})">
+        <div class="day-cell-top">
+          <span class="day-cell-number">${day}</span>
+        </div>
+        <div class="day-cell-events">
+          ${eventsHtml}
+          ${moreHtml}
+        </div>
+      </div>
+    `;
+  }
+
+  // 3. Next Month Trailing Days to complete 35 or 42 grid cells
+  const totalRendered = firstDayIndex + totalDaysInMonth;
+  const trailingCount = (totalRendered % 7 === 0) ? 0 : 7 - (totalRendered % 7);
+  for (let day = 1; day <= trailingCount; day++) {
+    html += `
+      <div class="calendar-day-cell is-inactive-month">
+        <div class="day-cell-top">
+          <span class="day-cell-number">${day}</span>
+        </div>
+      </div>
+    `;
+  }
+
+  daysGrid.innerHTML = html;
+
+  // Render selected day drawer
+  if (!calSelectedDateKey) {
+    // Default to today
+    calSelectedDateKey = toDateKey(todayYear, todayMonth, todayDate);
+  }
+  renderSelectedDayDrawer(calSelectedDateKey);
+}
+
+function selectCalendarDay(dateKey, day) {
+  calSelectedDateKey = dateKey;
+  document.querySelectorAll(".calendar-day-cell").forEach(cell => {
+    cell.classList.toggle("is-selected", cell.dataset.date === dateKey);
+  });
+  renderSelectedDayDrawer(dateKey);
+}
+window.selectCalendarDay = selectCalendarDay;
+
+function renderSelectedDayDrawer(dateKey) {
+  const drawerTitle = document.getElementById("selectedDayTitle");
+  const drawerCount = document.getElementById("selectedDayContestsCount");
+  const drawerList = document.getElementById("selectedDayContestsList");
+  if (!drawerTitle || !drawerList) return;
+
+  const [y, m, d] = dateKey.split("-").map(Number);
+  const dateObj = new Date(y, m - 1, d);
+  const formattedDate = dateObj.toLocaleDateString("en-IN", {
+    weekday: "long",
+    year: "numeric",
+    month: "long",
+    day: "numeric"
+  });
+
+  drawerTitle.textContent = `Contests for ${formattedDate}`;
+
+  const dayContests = masterContests.filter(c => {
+    const cStart = new Date(c.startTime);
+    return cStart.getFullYear() === y &&
+           cStart.getMonth() === (m - 1) &&
+           cStart.getDate() === d;
+  });
+
+  if (drawerCount) {
+    drawerCount.textContent = `${dayContests.length} ${dayContests.length === 1 ? "Contest" : "Contests"}`;
+  }
+
+  if (dayContests.length === 0) {
+    drawerList.innerHTML = `
+      <div style="font-size: 0.88rem; color: var(--text-muted); padding: 10px 0;">
+        No competitive programming contests scheduled on this day.
+      </div>
+    `;
+    return;
+  }
+
+  drawerList.innerHTML = dayContests.map(c => {
+    const status = getContestStatus(c);
+    const gcalUrl = generateGoogleCalendarUrl(c);
+
+    return `
+      <div class="day-drawer-item">
+        <div class="drawer-item-info">
+          <div style="display: flex; align-items: center; gap: 8px;">
+            <span class="contest-platform-tag platform-tag-${getPlatformBadgeClass(c.platform)}">
+              ${c.platformName}
+            </span>
+            <span class="drawer-item-title">${escapeHtml(c.title)}</span>
+          </div>
+          <div class="drawer-item-meta">
+            📅 ${formatContestDateIst(c.startTime)} • ⏱️ ${c.durationLabel} • ⭐ ${c.rated}
+          </div>
+        </div>
+        <div class="drawer-item-actions">
+          <a href="${c.url}" target="_blank" rel="noopener noreferrer" class="btn btn-primary btn-sm">
+            <span>Enter Contest</span>
+          </a>
+          <a href="${gcalUrl}" target="_blank" rel="noopener noreferrer" class="btn btn-secondary btn-sm" title="Add to Google Calendar">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect>
+              <line x1="16" y1="2" x2="16" y2="6"></line>
+              <line x1="8" y1="2" x2="8" y2="6"></line>
+              <line x1="3" y1="10" x2="21" y2="10"></line>
+            </svg>
+            <span>Add G-Cal</span>
+          </a>
+        </div>
+      </div>
+    `;
+  }).join("");
+}
+
+function setupCalendarEventListeners() {
+  // Platform Tabs
+  document.querySelectorAll("#calendarPlatformTabs .cal-platform-tab").forEach(tab => {
+    tab.addEventListener("click", () => {
+      document.querySelectorAll("#calendarPlatformTabs .cal-platform-tab").forEach(t => t.classList.remove("active"));
+      tab.classList.add("active");
+      calSelectedPlatform = tab.dataset.platform;
+      renderCalendarCards();
+      if (calViewMode === "month") renderCalendarMonth();
+    });
+  });
+
+  // Status Filter
+  const statusFilter = document.getElementById("calendarStatusFilter");
+  if (statusFilter) {
+    statusFilter.addEventListener("change", (e) => {
+      calSelectedStatus = e.target.value;
+      renderCalendarCards();
+      if (calViewMode === "month") renderCalendarMonth();
+    });
+  }
+
+  // Search Input
+  const searchInput = document.getElementById("calendarSearchInput");
+  const clearSearch = document.getElementById("clearCalendarSearchBtn");
+  if (searchInput && clearSearch) {
+    searchInput.addEventListener("input", (e) => {
+      calSearchQuery = e.target.value.trim().toLowerCase();
+      clearSearch.style.display = calSearchQuery ? "flex" : "none";
+      renderCalendarCards();
+      if (calViewMode === "month") renderCalendarMonth();
+    });
+    clearSearch.addEventListener("click", () => {
+      searchInput.value = "";
+      calSearchQuery = "";
+      clearSearch.style.display = "none";
+      renderCalendarCards();
+      if (calViewMode === "month") renderCalendarMonth();
+    });
+  }
+
+  // View Mode Toggles
+  const toggleCards = document.getElementById("calViewToggleCards");
+  const toggleMonth = document.getElementById("calViewToggleMonth");
+  if (toggleCards && toggleMonth) {
+    toggleCards.addEventListener("click", () => {
+      calViewMode = "cards";
+      toggleCards.classList.add("active");
+      toggleMonth.classList.remove("active");
+      document.getElementById("calendarCardsContainer").style.display = "flex";
+      document.getElementById("calendarMonthContainer").style.display = "none";
+      renderCalendarCards();
+    });
+    toggleMonth.addEventListener("click", () => {
+      calViewMode = "month";
+      toggleMonth.classList.add("active");
+      toggleCards.classList.remove("active");
+      document.getElementById("calendarCardsContainer").style.display = "none";
+      document.getElementById("calendarMonthContainer").style.display = "flex";
+      renderCalendarMonth();
+    });
+  }
+
+  // Month Matrix Navigation
+  const prevBtn = document.getElementById("monthPrevBtn");
+  const nextBtn = document.getElementById("monthNextBtn");
+  const todayBtn = document.getElementById("monthTodayBtn");
+  if (prevBtn) {
+    prevBtn.addEventListener("click", () => {
+      calViewMonth--;
+      if (calViewMonth < 0) {
+        calViewMonth = 11;
+        calViewYear--;
+      }
+      renderCalendarMonth();
+    });
+  }
+  if (nextBtn) {
+    nextBtn.addEventListener("click", () => {
+      calViewMonth++;
+      if (calViewMonth > 11) {
+        calViewMonth = 0;
+        calViewYear++;
+      }
+      renderCalendarMonth();
+    });
+  }
+  if (todayBtn) {
+    todayBtn.addEventListener("click", () => {
+      const now = new Date();
+      calViewYear = now.getFullYear();
+      calViewMonth = now.getMonth();
+      calSelectedDateKey = null;
+      renderCalendarMonth();
+    });
+  }
+
+  // Export .ICS
+  const exportIcsBtn = document.getElementById("exportAllIcsBtn");
+  if (exportIcsBtn) exportIcsBtn.addEventListener("click", exportAllContestsIcs);
+
+  // Refresh Button
+  const refreshCalBtn = document.getElementById("refreshCalendarBtn");
+  if (refreshCalBtn) {
+    refreshCalBtn.addEventListener("click", () => {
+      refreshCalBtn.classList.add("spinning");
+      fetchOnlineCodeforcesContests().finally(() => {
+        refreshCalBtn.classList.remove("spinning");
+        showToast("Contest feeds refreshed!", true);
+      });
+    });
+  }
+}
+
+// ==========================================
+// 11. INITIALIZATION
 // ==========================================
 document.addEventListener("DOMContentLoaded", () => {
   setupEventListeners();
@@ -1525,4 +2490,6 @@ document.addEventListener("DOMContentLoaded", () => {
   updateOverallMetrics();
   applyOverallFilters();
   applyContestFilters();
+  initContestCalendar();
 });
+

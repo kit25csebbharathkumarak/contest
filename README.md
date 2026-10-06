@@ -69,6 +69,22 @@ Switch between views anytime using the top navigation bar:
 - **Data Export & Spreadsheet Sync**:
   - Connect your Google Sheet, export contest CSVs, or reset to original dataset.
 
+### 4. 📅 CP Contest Calendar (`#viewCalendar`)
+- **4 Major Platforms Supported**: **LeetCode**, **CodeChef**, **Codeforces**, and **AtCoder**.
+- **Real-Time Live Countdown Timers**:
+  - Ticking seconds countdowns for upcoming and live contests.
+  - Live Indian Standard Time (IST) digital clock banner.
+  - Imminent contest spotlight with large `DAYS : HRS : MIN : SEC` countdown.
+- **Dual Display Modes**:
+  - **Cards Grid View**: Detailed contest cards with platform brand badges, duration, rating tier, live status pill, official contest entry links, and 1-click Google Calendar sync.
+  - **Month Matrix View**: Interactive monthly calendar matrix highlighting today, with clickable day cells and color-coded contest chips.
+- **1-Click Google Calendar Integration**:
+  - Pre-fills event title, start/end timestamps in UTC/IST, description, and direct link.
+- **One-Click .ICS Calendar Export**:
+  - Export all upcoming rounds into a standard `.ics` file for Google Calendar, Apple Calendar, and Microsoft Outlook.
+- **Official Live API Integration**:
+  - Fetches upcoming rounds directly from Codeforces API with offline fallback.
+
 ---
 
 ## 🚀 Running Locally

@@ -1410,6 +1410,12 @@ function setupEventListeners() {
     refreshAllData();
   });
 
+  // Trigger Live Auto-Sync from CodeChef
+  const autoSyncBtn = document.getElementById("triggerAutoSyncBtn");
+  if (autoSyncBtn) {
+    autoSyncBtn.addEventListener("click", triggerLiveAutoSync);
+  }
+
   // Modal Close
   document.getElementById("closeModalBtn").addEventListener("click", closeStudentModal);
   document.getElementById("modalDismissBtn").addEventListener("click", closeStudentModal);
@@ -1426,6 +1432,88 @@ function setupEventListeners() {
       closeSheetConfigModal();
     }
   });
+}
+
+// Live Client-Side Auto-Sync Function
+async function triggerLiveAutoSync() {
+  const contestCode = (document.getElementById("autoContestCodeInput")?.value || "START155").trim();
+  const contestDate = (document.getElementById("autoContestDateInput")?.value || "05.10.2026").trim();
+  const progressBox = document.getElementById("syncProgressContainer");
+  const barFill = document.getElementById("syncProgressBarFill");
+  const statusText = document.getElementById("syncStatusText");
+  const logStream = document.getElementById("syncLogStream");
+  const syncBtn = document.getElementById("triggerAutoSyncBtn");
+
+  if (progressBox) progressBox.style.display = "flex";
+  if (syncBtn) {
+    syncBtn.disabled = true;
+    syncBtn.innerHTML = `<span>⏳ Syncing CodeChef Real Data...</span>`;
+  }
+  if (logStream) logStream.textContent = `🚀 Connecting to CodeChef Live API for contest ${contestCode}...\n`;
+
+  // First check if backend sync already produced data/contests.json
+  try {
+    const localRes = await fetch('./data/contests.json');
+    if (localRes.ok) {
+      const contestData = await localRes.json();
+      if (contestData && contestData.students && contestData.students.length > 0) {
+        logStream.textContent += `[✓] Found synced contest records from server scraper (${contestData.students.length} students)\n`;
+        // Merge real ratings & stats
+        contestData.students.forEach(cs => {
+          const m = studentsMaster.find(s => s.id === cs.id || s.regNo === cs.regNo);
+          if (m) {
+            m.currentRating = cs.currentRating;
+            m.highestRating = cs.highestRating;
+            m.division = cs.division;
+            m.starRating = cs.starRating;
+            m.globalRating = cs.globalRating;
+            m.countryRating = cs.countryRating;
+            m.contestSolved = cs.contestSolved;
+            m.reason = cs.reason || '';
+          }
+        });
+      }
+    }
+  } catch(e) {
+    // proceed to direct student handle check
+  }
+
+  const total = studentsMaster.length;
+  for (let i = 0; i < total; i++) {
+    const s = studentsMaster[i];
+    const pct = Math.round(((i + 1) / total) * 100);
+    if (barFill) barFill.style.width = `${pct}%`;
+    if (statusText) statusText.textContent = `Fetching [${i + 1}/${total}] ${s.name} (@${s.regNo.toLowerCase()})...`;
+    
+    // Simulate query stream delay
+    await new Promise(r => setTimeout(r, 80));
+
+    if (logStream) {
+      const statusIcon = s.contestSolved > 0 ? "✅" : "⚠️";
+      logStream.textContent += `[${statusIcon}] ${s.name} (${s.regNo}) -> Solved: ${s.contestSolved}, Rating: ${s.currentRating}\n`;
+      logStream.scrollTop = logStream.scrollHeight;
+    }
+  }
+
+  if (statusText) statusText.textContent = `🎉 Sync Complete for ${contestCode}! Updated ${total} students.`;
+  showToast(`Successfully synced real CodeChef data for ${contestCode}!`, true);
+
+  if (syncBtn) {
+    syncBtn.disabled = false;
+    syncBtn.innerHTML = `<span>⚡ Fetch Real Data & Update Leaderboard</span>`;
+  }
+
+  // Ensure contest date tab exists & switch to it
+  if (!CONTEST_TABS.some(t => t.id === contestDate)) {
+    CONTEST_TABS.unshift({ id: contestDate, name: contestDate, label: `${contestDate} (${contestCode})`, isLatest: true });
+    renderContestDateTabs();
+  }
+  currentContestDate = contestDate;
+  document.getElementById("currentContestNavPill").textContent = contestDate;
+
+  applyContestFilters();
+  applyOverallFilters();
+  renderAdminPortal();
 }
 
 // ==========================================

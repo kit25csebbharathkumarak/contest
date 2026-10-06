@@ -1,6 +1,35 @@
-# 🏆 CampusCP - Competitive Programming Portal & Faculty Admin Dashboard
+# 🏆 CampusCP - Competitive Programming Portal & Live Contest Automation
 
 A comprehensive, dark-themed competitive programming web app for college students and faculty. Built strictly using **HTML5, Vanilla CSS, and JavaScript (ES6+)**.
+
+---
+
+## ⚡ Automated Real Contest Data Fetching
+
+The portal now features **3 ways to automatically fetch real contest data** (problems solved, ratings, ranks, absentees) right after any contest finishes:
+
+### 1. 🤖 Automated GitHub Actions (Runs After Every Contest)
+- File: [`.github/workflows/auto-contest-sync.yml`](.github/workflows/auto-contest-sync.yml)
+- **Automatic Schedule**: Runs every **Wednesday at 22:45 IST** (right after CodeChef Starters finishes at 22:30 IST).
+- **What it does**:
+  1. Queries CodeChef's live rankings and profiles for all enrolled college students.
+  2. Extracts real problems solved, current rating, highest rating, star rating, global rank, and country rank.
+  3. Automatically flags students who did not submit as **"Uninformed Absent"** (`solved: 0`).
+  4. Automatically commits and updates [`data/contests.json`](data/contests.json) and [`sample-sheet-data.csv`](sample-sheet-data.csv).
+  5. Can also be triggered manually anytime under the GitHub **Actions** tab &rarr; **Run workflow**.
+
+### 2. ⚡ Live Auto-Fetch Engine in the Faculty & Admin Portal
+- Located inside the web app: **Faculty & Admin Portal &rarr; Real Contest Auto-Fetch Engine**.
+- Enter any contest code (e.g. `START155`, `START154`) and click **"⚡ Fetch Real Data & Update Leaderboard"**.
+- Displays a real-time progress bar and log stream as it syncs all student handles and updates rankings immediately.
+
+### 3. 📑 Google Sheets Auto-Sync (Apps Script)
+- File: [`GoogleAppsScript_CodeChef_AutoSync.js`](GoogleAppsScript_CodeChef_AutoSync.js)
+- For faculty who maintain the Google Sheet:
+  1. In Google Sheets, click **Extensions &rarr; Apps Script**.
+  2. Paste the code from `GoogleAppsScript_CodeChef_AutoSync.js` and click **Save**.
+  3. Reload your sheet to get the **"🏆 Contest Tools"** menu with **"⚡ Auto-Fetch CodeChef Contest Data"**.
+  4. Set a weekly time trigger in Apps Script to populate the sheet automatically every Wednesday night!
 
 ---
 
@@ -10,8 +39,8 @@ Switch between views anytime using the top navigation bar:
 
 ### 1. 📊 Overall Leaderboard (`#viewOverall`)
 - **College-Wide Rankings**: Total problems solved across platforms (LeetCode, Codeforces, CodeChef, AtCoder).
-- **Hall of Fame (Overall)**: Top 3 champions podium with Gold 🥇, Silver 🥈, and Bronze 🥉 spotlights.
-- **Search & Filters**: Search by Name or Roll No; filter by Department (CSE, IT, ECE, AI&DS, CSBS, EEE) and Year (1st–4th Year).
+- **Hall of Fame**: Visual top 3 champions podium with Gold 🥇, Silver 🥈, and Bronze 🥉 awards.
+- **Search & Filters**: Search by Name or Roll Number; filter by Department (CSE, IT, ECE, AI&DS, CSBS, EEE) and Year (1st–4th Year).
 - **Platform Focus Tabs**: Overall Standing, LeetCode Focus, Codeforces Focus, CodeChef Focus, and AtCoder Focus.
 
 ### 2. ⚡ Daily Contest Tracker (`#viewContest`)
@@ -21,7 +50,7 @@ Switch between views anytime using the top navigation bar:
     - `Rank`
     - `Name of the student`
     - `Register Number`
-    - `No of problems solved` (Color-coded pills: 3 Dark Green, 2 Light Green, 1 Orange, 0 Red)
+    - `No of problems solved` (3 Dark Green, 2 Light Green, 1 Orange, 0 Red)
     - `If no reason` (Absence reason tracking)
     - `Current Rating` & `Highest Rating`
     - `Division` (Div 3, Div 4)

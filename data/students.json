@@ -1,0 +1,191 @@
+[
+  {
+    "id": 1,
+    "name": "BHARATHKUMAR A K",
+    "regNo": "711525BCS016",
+    "dept": "CSE",
+    "year": "4",
+    "ccHandle": "bharathkumar_ak",
+    "lcHandle": "bharathkumar_ak"
+  },
+  {
+    "id": 2,
+    "name": "DHAKSHITHAA SHRI J R",
+    "regNo": "711525BCS024",
+    "dept": "CSE",
+    "year": "4",
+    "ccHandle": "dhakshithaa_jr",
+    "lcHandle": "dhakshithaa_jr"
+  },
+  {
+    "id": 3,
+    "name": "KAMESH M",
+    "regNo": "711525BCS063",
+    "dept": "CSE",
+    "year": "3",
+    "ccHandle": "kamesh_m",
+    "lcHandle": "kamesh_m"
+  },
+  {
+    "id": 4,
+    "name": "HEMASRI S",
+    "regNo": "711525BCS044",
+    "dept": "IT",
+    "year": "3",
+    "ccHandle": "hemasri_s",
+    "lcHandle": "hemasri_s"
+  },
+  {
+    "id": 5,
+    "name": "HARISIVAM S",
+    "regNo": "711525BCS042",
+    "dept": "ECE",
+    "year": "3",
+    "ccHandle": "harisivam_s",
+    "lcHandle": "harisivam_s"
+  },
+  {
+    "id": 6,
+    "name": "AJO LIMIS A L",
+    "regNo": "711525BCS007",
+    "dept": "CSE",
+    "year": "2",
+    "ccHandle": "ajo_limis",
+    "lcHandle": "ajo_limis"
+  },
+  {
+    "id": 7,
+    "name": "KANISHK M",
+    "regNo": "711525BCS064",
+    "dept": "IT",
+    "year": "4",
+    "ccHandle": "kanishk_m",
+    "lcHandle": "kanishk_m"
+  },
+  {
+    "id": 8,
+    "name": "JOSHINI SRI S",
+    "regNo": "711525BCS056",
+    "dept": "AI&DS",
+    "year": "2",
+    "ccHandle": "joshini_sri",
+    "lcHandle": "joshini_sri"
+  },
+  {
+    "id": 9,
+    "name": "KEERTHANA R",
+    "regNo": "711525BCS072",
+    "dept": "CSE",
+    "year": "3",
+    "ccHandle": "keerthana_r",
+    "lcHandle": "keerthana_r"
+  },
+  {
+    "id": 10,
+    "name": "BARANI V",
+    "regNo": "711525BCS015",
+    "dept": "CSE",
+    "year": "1",
+    "ccHandle": "barani_v",
+    "lcHandle": "barani_v"
+  },
+  {
+    "id": 11,
+    "name": "KIRUBA SAHAR R",
+    "regNo": "711525BCS075",
+    "dept": "IT",
+    "year": "2",
+    "ccHandle": "kiruba_sahar",
+    "lcHandle": "kiruba_sahar"
+  },
+  {
+    "id": 12,
+    "name": "AKASH S",
+    "regNo": "711525BCS008",
+    "dept": "CSBS",
+    "year": "3",
+    "ccHandle": "akash_s",
+    "lcHandle": "akash_s"
+  },
+  {
+    "id": 13,
+    "name": "KRISHNARAJ S",
+    "regNo": "711525BCS079",
+    "dept": "EEE",
+    "year": "4",
+    "ccHandle": "krishnaraj_s",
+    "lcHandle": "krishnaraj_s"
+  },
+  {
+    "id": 14,
+    "name": "DEEPIKA J",
+    "regNo": "711525BCS021",
+    "dept": "AI&DS",
+    "year": "1",
+    "ccHandle": "deepika_j",
+    "lcHandle": "deepika_j"
+  },
+  {
+    "id": 15,
+    "name": "BABY SRUTHI R",
+    "regNo": "711525BCS013",
+    "dept": "ECE",
+    "year": "2",
+    "ccHandle": "baby_sruthi",
+    "lcHandle": "baby_sruthi"
+  },
+  {
+    "id": 16,
+    "name": "JOY ANGELINE P",
+    "regNo": "711525BCS058",
+    "dept": "CSE",
+    "year": "1",
+    "ccHandle": "joy_angeline",
+    "lcHandle": "joy_angeline"
+  },
+  {
+    "id": 17,
+    "name": "JENILIA GRACY A",
+    "regNo": "711525BCS051",
+    "dept": "IT",
+    "year": "3",
+    "ccHandle": "jenilia_gracy",
+    "lcHandle": "jenilia_gracy"
+  },
+  {
+    "id": 18,
+    "name": "ASHVIJA S S",
+    "regNo": "711525BCS012",
+    "dept": "CSBS",
+    "year": "2",
+    "ccHandle": "ashvija_ss",
+    "lcHandle": "ashvija_ss"
+  },
+  {
+    "id": 19,
+    "name": "HARIDASS P",
+    "regNo": "711525BCS039",
+    "dept": "ECE",
+    "year": "1",
+    "ccHandle": "haridass_p",
+    "lcHandle": "haridass_p"
+  },
+  {
+    "id": 20,
+    "name": "JABARSON D M",
+    "regNo": "711525BCS046",
+    "dept": "CSE",
+    "year": "4",
+    "ccHandle": "jabarson_dm",
+    "lcHandle": "jabarson_dm"
+  },
+  {
+    "id": 21,
+    "name": "GOKILADEVI P",
+    "regNo": "711525BCS036",
+    "dept": "CSE",
+    "year": "3",
+    "ccHandle": "gokiladevi_p",
+    "lcHandle": "gokiladevi_p"
+  }
+]

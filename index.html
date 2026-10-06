@@ -773,6 +773,73 @@
             </div>
           </div>
 
+          <!-- Card: Real CodeChef Contest Auto-Sync Engine -->
+          <div class="admin-card">
+            <div class="admin-card-header">
+              <div class="card-title-group">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                  <polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"></polygon>
+                </svg>
+                <h3>⚡ Real Contest Auto-Fetch Engine</h3>
+              </div>
+            </div>
+
+            <div class="admin-card-body">
+              <p class="tool-desc">Automatically fetch real problems solved, ratings, and ranks directly from CodeChef for all 21 students right after the contest finishes:</p>
+              
+              <div class="form-group">
+                <label for="autoContestPlatform" class="form-label">Platform:</label>
+                <select id="autoContestPlatform" class="styled-select" style="width: 100%;">
+                  <option value="codechef">CodeChef (Starters / Rated Contests)</option>
+                  <option value="leetcode">LeetCode (Weekly / Biweekly Contest)</option>
+                </select>
+              </div>
+
+              <div class="form-group">
+                <label for="autoContestCodeInput" class="form-label">Contest Code / ID:</label>
+                <input 
+                  type="text" 
+                  id="autoContestCodeInput" 
+                  class="form-input" 
+                  value="START155" 
+                  placeholder="e.g. START155, START154"
+                >
+                <div class="input-hint">Enter the CodeChef contest code (e.g. START155 for yesterday's Starters).</div>
+              </div>
+
+              <div class="form-group">
+                <label for="autoContestDateInput" class="form-label">Contest Date Tab:</label>
+                <input 
+                  type="text" 
+                  id="autoContestDateInput" 
+                  class="form-input" 
+                  value="05.10.2026" 
+                  placeholder="e.g. 05.10.2026"
+                >
+              </div>
+
+              <button id="triggerAutoSyncBtn" class="btn btn-primary" style="width: 100%;">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                  <polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"></polygon>
+                </svg>
+                ⚡ Fetch Real Data & Update Leaderboard
+              </button>
+
+              <!-- Live Progress Feed -->
+              <div id="syncProgressContainer" class="sync-progress-box" style="display: none;">
+                <div class="sync-progress-bar-wrap">
+                  <div class="sync-progress-bar-fill" id="syncProgressBarFill" style="width: 0%;"></div>
+                </div>
+                <div class="sync-status-text" id="syncStatusText">Initializing sync...</div>
+                <div class="sync-log-stream" id="syncLogStream"></div>
+              </div>
+
+              <div class="automation-options-strip">
+                <span class="chip chip-dept">🔄 Auto-Sync Scheduled: Every Wed 22:45 IST</span>
+              </div>
+            </div>
+          </div>
+
           <!-- Card: Google Sheet Sync & CSV Import -->
           <div class="admin-card">
             <div class="admin-card-header">

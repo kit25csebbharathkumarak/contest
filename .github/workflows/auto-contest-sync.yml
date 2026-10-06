@@ -1,0 +1,46 @@
+name: Auto-Sync CodeChef Contest Data
+
+on:
+  schedule:
+    # Runs every Wednesday at 17:15 UTC (22:45 IST, right after CodeChef Starters finishes at 22:30 IST)
+    - cron: '15 17 * * 3'
+  workflow_dispatch:
+    inputs:
+      contest_code:
+        description: 'CodeChef Contest Code (e.g. START155, START154)'
+        required: false
+        default: 'START155'
+
+jobs:
+  sync-contest:
+    runs-on: ubuntu-latest
+
+    permissions:
+      contents: write
+
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      - name: Run CodeChef Contest Scraper
+        env:
+          CONTEST_CODE: ${{ github.event.inputs.contest_code || 'START155' }}
+        run: |
+          node scripts/sync-codechef-contest.js
+
+      - name: Commit and Push Updated Contest Data
+        run: |
+          git config --local user.email "github-actions[bot]@users.noreply.github.com"
+          git config --local user.name "github-actions[bot]"
+          git add data/ sample-sheet-data.csv
+          if git diff --staged --quiet; then
+            echo "No changes in contest data."
+          else
+            git commit -m "Auto-sync real CodeChef contest results [skip ci]"
+            git push
+          fi

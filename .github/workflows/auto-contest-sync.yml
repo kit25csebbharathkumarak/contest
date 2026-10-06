@@ -33,6 +33,10 @@ jobs:
         run: |
           node scripts/sync-codechef-contest.js
 
+      - name: Sync Official CP Contest Calendar (LC, CC, CF, AC)
+        run: |
+          node scripts/sync-contest-calendar.js
+
       - name: Commit and Push Updated Contest Data
         run: |
           git config --local user.email "github-actions[bot]@users.noreply.github.com"
@@ -41,6 +45,6 @@ jobs:
           if git diff --staged --quiet; then
             echo "No changes in contest data."
           else
-            git commit -m "Auto-sync real CodeChef contest results [skip ci]"
+            git commit -m "Auto-sync real CodeChef contest results and CP contest calendar [skip ci]"
             git push
           fi

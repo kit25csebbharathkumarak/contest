@@ -1068,8 +1068,8 @@
           <div class="filter-dropdown-wrap">
             <label for="calendarStatusFilter" class="filter-label">Status:</label>
             <select id="calendarStatusFilter" class="styled-select">
-              <option value="all">All Timelines (Live, Upcoming & Recent)</option>
-              <option value="upcoming" selected>Upcoming Contests Only</option>
+              <option value="all" selected>All Timelines (Live, Upcoming & Recent)</option>
+              <option value="upcoming">Upcoming Contests Only</option>
               <option value="live">🔴 Live Now</option>
               <option value="past">Completed / Past</option>
             </select>
@@ -1114,6 +1114,12 @@
 
           <!-- Quick Actions -->
           <div class="calendar-actions-group">
+            <button id="syncOfficialCalendarBtn" class="btn btn-primary btn-sm" title="Fetch live official data from LeetCode, CodeChef, Codeforces, and AtCoder">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"></polygon>
+              </svg>
+              <span>⚡ Sync Official</span>
+            </button>
             <button id="exportAllIcsBtn" class="btn btn-outline btn-sm" title="Download all contests to Apple Calendar / Outlook / G-Cal (.ics)">
               <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                 <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>

@@ -1529,8 +1529,18 @@ async function triggerLiveAutoSync() {
 // 10. CONTEST CALENDAR LOGIC (LeetCode, CodeChef, Codeforces, AtCoder)
 // ==========================================
 
+function escapeHtml(str) {
+  if (str === null || str === undefined) return "";
+  return String(str)
+    .replace(/&/g, "&amp;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;")
+    .replace(/"/g, "&quot;")
+    .replace(/'/g, "&#039;");
+}
+
 let calSelectedPlatform = "all";
-let calSelectedStatus = "upcoming";
+let calSelectedStatus = "all"; // Default to all so all live, upcoming & recent rounds are visible
 let calSearchQuery = "";
 let calViewMode = "cards"; // 'cards' | 'month'
 
@@ -1737,52 +1747,119 @@ function generateBaseContests() {
   return contests;
 }
 
-async function fetchOnlineCodeforcesContests() {
+function mergeOfficialContests(newContests) {
+  if (!Array.isArray(newContests) || newContests.length === 0) return;
+
+  newContests.forEach(nc => {
+    const sDate = typeof nc.startTime === "string" ? new Date(nc.startTime) : nc.startTime;
+    const eDate = typeof nc.endTime === "string" ? new Date(nc.endTime) : nc.endTime;
+
+    const formattedItem = {
+      ...nc,
+      startTime: sDate,
+      endTime: eDate,
+      isOfficial: true
+    };
+
+    // Find match by exact id or same platform with start time within 2 days
+    const existingIdx = masterContests.findIndex(m => 
+      m.id === nc.id || 
+      (m.platform === nc.platform && Math.abs(new Date(m.startTime).getTime() - sDate.getTime()) < 86400000 * 2)
+    );
+
+    if (existingIdx >= 0) {
+      masterContests[existingIdx] = { ...masterContests[existingIdx], ...formattedItem };
+    } else {
+      masterContests.push(formattedItem);
+    }
+  });
+
+  masterContests.sort((a, b) => new Date(a.startTime).getTime() - new Date(b.startTime).getTime());
+}
+
+async function fetchOfficialCalendarData() {
+  let anyLoaded = false;
+
+  // 1. Load official pre-synced dataset: data/contest-calendar.json
   try {
-    const res = await fetch("https://codeforces.com/api/contest.list?gym=false");
-    if (!res.ok) return;
-    const data = await res.json();
-    if (data.status === "OK" && Array.isArray(data.result)) {
-      const cfUpcoming = data.result.filter(c => c.phase === "BEFORE" || c.phase === "CODING");
-      if (cfUpcoming.length > 0) {
-        cfUpcoming.forEach(c => {
-          const start = new Date(c.startTimeSeconds * 1000);
-          const end = new Date((c.startTimeSeconds + c.durationSeconds) * 1000);
-          const cid = `cf_api_${c.id}`;
-          
-          const existingIdx = masterContests.findIndex(m => m.id === cid || m.title === c.name);
-          const durationMins = Math.round(c.durationSeconds / 60);
-          const durHours = (durationMins / 60).toFixed(1).replace(".0", "");
-
-          const item = {
-            id: cid,
-            platform: "codeforces",
-            platformName: "Codeforces",
-            title: c.name,
-            startTime: start,
-            endTime: end,
-            durationMinutes: durationMins,
-            durationLabel: `${durHours} Hours`,
-            rated: c.name.includes("Div. 1") ? "Rated Div 1" : c.name.includes("Div. 3") ? "Rated Div 3" : "Rated Div 2",
-            type: c.type || "Codeforces Round",
-            url: `https://codeforces.com/contest/${c.id}`,
-            description: `Live official round from Codeforces: ${c.name}. Format: ${c.type}.`
-          };
-
-          if (existingIdx >= 0) {
-            masterContests[existingIdx] = item;
-          } else {
-            masterContests.push(item);
-          }
-        });
-        masterContests.sort((a, b) => a.startTime.getTime() - b.startTime.getTime());
-        renderContestCalendar();
+    const res = await fetch("./data/contest-calendar.json");
+    if (res.ok) {
+      const data = await res.json();
+      if (data && Array.isArray(data.contests) && data.contests.length > 0) {
+        mergeOfficialContests(data.contests);
+        anyLoaded = true;
       }
     }
   } catch (err) {
-    // Graceful offline fallback
-    console.log("Offline schedule active:", err.message);
+    console.warn("Local contest-calendar.json sync:", err.message);
   }
+
+  // 2. Fetch Codeforces official API live (CORS enabled)
+  try {
+    const cfRes = await fetch("https://codeforces.com/api/contest.list?gym=false");
+    if (cfRes.ok) {
+      const cfData = await cfRes.json();
+      if (cfData.status === "OK" && Array.isArray(cfData.result)) {
+        const cfContests = cfData.result
+          .filter(c => c.phase === "BEFORE" || c.phase === "CODING")
+          .map(c => ({
+            id: `cf_${c.id}`,
+            platform: "codeforces",
+            platformName: "Codeforces",
+            title: c.name,
+            startTime: new Date(c.startTimeSeconds * 1000),
+            endTime: new Date((c.startTimeSeconds + c.durationSeconds) * 1000),
+            durationMinutes: Math.round(c.durationSeconds / 60),
+            durationLabel: `${(c.durationSeconds / 3600).toFixed(1).replace(".0", "")} Hours`,
+            rated: c.name.includes("Div. 1") ? "Rated Div 1" : c.name.includes("Div. 3") ? "Rated Div 3" : "Rated Div 2",
+            type: c.type || "Codeforces Round",
+            url: `https://codeforces.com/contest/${c.id}`,
+            description: `Official Codeforces Round: ${c.name}. Format: ${c.type}.`,
+            isOfficial: true
+          }));
+        if (cfContests.length > 0) {
+          mergeOfficialContests(cfContests);
+          anyLoaded = true;
+        }
+      }
+    }
+  } catch (err) {
+    console.warn("Live Codeforces API:", err.message);
+  }
+
+  // 3. Fetch AtCoder official dataset live
+  try {
+    const atRes = await fetch("https://kenkoooo.com/atcoder/resources/contests.json");
+    if (atRes.ok) {
+      const atData = await atRes.json();
+      const nowSec = Date.now() / 1000;
+      const atList = atData.filter(c => c.start_epoch_second > (nowSec - 86400 * 3) && !c.id.startsWith("adt_")).slice(0, 8);
+      const atContests = atList.map(c => ({
+        id: `at_${c.id}`,
+        platform: "atcoder",
+        platformName: "AtCoder",
+        title: c.title,
+        startTime: new Date(c.start_epoch_second * 1000),
+        endTime: new Date((c.start_epoch_second + c.duration_second) * 1000),
+        durationMinutes: Math.round(c.duration_second / 60),
+        durationLabel: Math.round(c.duration_second / 60) >= 100 ? `${(c.duration_second / 3600).toFixed(1).replace(".0", "")} Hours` : `${Math.round(c.duration_second / 60)} Mins`,
+        rated: c.rate_change || "Rated for Registered Users",
+        type: c.id.startsWith("abc") ? "ABC Round" : c.id.startsWith("arc") ? "ARC Round" : "AtCoder Contest",
+        url: `https://atcoder.jp/contests/${c.id}`,
+        description: `Official AtCoder Contest: ${c.title}.`,
+        isOfficial: true
+      }));
+      if (atContests.length > 0) {
+        mergeOfficialContests(atContests);
+        anyLoaded = true;
+      }
+    }
+  } catch (err) {
+    console.warn("Live AtCoder API:", err.message);
+  }
+
+  renderContestCalendar();
+  return anyLoaded;
 }
 
 function getContestStatus(contest) {
@@ -1913,7 +1990,9 @@ function initContestCalendar() {
   calLiveTimerId = setInterval(updateContestLiveTimers, 1000);
   updateContestLiveTimers();
   renderContestCalendar();
-  fetchOnlineCodeforcesContests();
+  fetchOfficialCalendarData().then(() => {
+    console.log("Official calendar data merged. Total:", masterContests.length);
+  });
 }
 
 function updateContestLiveTimers() {
@@ -2109,10 +2188,13 @@ function renderCalendarCards() {
     return `
       <div class="contest-item-card platform-${getPlatformBadgeClass(c.platform)} is-${status}">
         <div class="contest-card-header">
-          <span class="contest-platform-tag platform-tag-${getPlatformBadgeClass(c.platform)}">
-            ${getPlatformIcon(c.platform)}
-            <span>${c.platformName}</span>
-          </span>
+          <div style="display: flex; align-items: center; gap: 8px;">
+            <span class="contest-platform-tag platform-tag-${getPlatformBadgeClass(c.platform)}">
+              ${getPlatformIcon(c.platform)}
+              <span>${c.platformName}</span>
+            </span>
+            ${c.isOfficial ? `<span class="badge-official" style="font-size:0.68rem; font-family:var(--font-mono); font-weight:700; background:rgba(16,185,129,0.18); color:#34d399; border:1px solid rgba(16,185,129,0.35); padding:2px 7px; border-radius:4px;">⚡ OFFICIAL</span>` : ''}
+          </div>
           <span class="contest-status-pill status-pill-${status}">
             ${status === 'live' ? '<span class="pulse-dot" style="background:#ef4444;box-shadow:0 0 8px #ef4444;"></span> LIVE NOW' : status === 'upcoming' ? '⏰ UPCOMING' : '🏁 CONCLUDED'}
           </span>
@@ -2473,9 +2555,23 @@ function setupCalendarEventListeners() {
   if (refreshCalBtn) {
     refreshCalBtn.addEventListener("click", () => {
       refreshCalBtn.classList.add("spinning");
-      fetchOnlineCodeforcesContests().finally(() => {
+      fetchOfficialCalendarData().finally(() => {
         refreshCalBtn.classList.remove("spinning");
-        showToast("Contest feeds refreshed!", true);
+        showToast("Official contest feeds updated from LeetCode, CodeChef, Codeforces & AtCoder!", true);
+      });
+    });
+  }
+
+  // Sync Official Contests Button
+  const syncOfficialBtn = document.getElementById("syncOfficialCalendarBtn");
+  if (syncOfficialBtn) {
+    syncOfficialBtn.addEventListener("click", () => {
+      syncOfficialBtn.disabled = true;
+      syncOfficialBtn.innerHTML = `<span>⏳ Syncing Feeds...</span>`;
+      fetchOfficialCalendarData().finally(() => {
+        syncOfficialBtn.disabled = false;
+        syncOfficialBtn.innerHTML = `<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"></polygon></svg><span>⚡ Sync Official</span>`;
+        showToast("Official contest feeds synchronized!", true);
       });
     });
   }

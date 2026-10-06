@@ -1,0 +1,1081 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="description" content="CampusCP - Modern Competitive Programming Leaderboard, Daily Contest Tracker & Faculty Admin Portal">
+  <title>CampusCP | Leaderboard, Contest Tracker & Admin Portal</title>
+  
+  <!-- Fonts -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&family=Outfit:wght@400;500;600;700;800&family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+  
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>🏆</text></svg>">
+  
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <!-- Ambient background glow elements -->
+  <div class="ambient-glow glow-1"></div>
+  <div class="ambient-glow glow-2"></div>
+  <div class="ambient-glow glow-3"></div>
+
+  <!-- Main Container -->
+  <div class="app-layout">
+    
+    <!-- Top Brand & View Navigation Header -->
+    <header class="main-header">
+      <div class="header-container">
+        <div class="brand-group">
+          <div class="brand-logo">
+            <svg class="logo-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"></polygon>
+            </svg>
+            <div class="brand-pulse"></div>
+          </div>
+          <div>
+            <div class="brand-meta">
+              <span class="badge badge-campus">CAMPUS CP PORTAL</span>
+              <span class="live-indicator">
+                <span class="pulse-dot"></span> <span id="sheetSyncStatus">Live Data</span>
+              </span>
+            </div>
+            <h1 class="brand-title">Campus<span>CP</span> Portal</h1>
+            <p class="brand-subtitle">Competitive Programming Rankings, Daily Contest Auditing & Faculty Reporting</p>
+          </div>
+        </div>
+
+        <!-- Global Header Actions -->
+        <div class="header-actions">
+          <button id="openSheetModalBtn" class="btn btn-secondary" title="Connect Google Sheet">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
+              <polyline points="14 2 14 8 20 8"></polyline>
+              <line x1="8" y1="13" x2="16" y2="13"></line>
+              <line x1="8" y1="17" x2="16" y2="17"></line>
+            </svg>
+            <span>Google Sheet</span>
+            <span class="sheet-pill" id="sheetSourceType">Connected</span>
+          </button>
+
+          <button id="refreshDataBtn" class="btn btn-icon" title="Refresh Leaderboard Data">
+            <svg id="refreshIcon" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <path d="M21.5 2v6h-6M21.34 15.57a10 10 0 1 1-.57-8.38l5.67-5.67"></path>
+            </svg>
+          </button>
+        </div>
+      </div>
+
+      <!-- Main Navigation Switcher (Overall vs Contest vs Admin) -->
+      <nav class="nav-switcher-bar">
+        <div class="nav-switcher">
+          <button class="nav-tab active" data-view="overall" id="navTabOverall">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <path d="M18 20V10M12 20V4M6 20v-6"></path>
+            </svg>
+            <span>Overall Leaderboard</span>
+            <span class="nav-count-badge" id="overallCodersBadge">25</span>
+          </button>
+
+          <button class="nav-tab" data-view="contest" id="navTabContest">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect>
+              <line x1="16" y1="2" x2="16" y2="6"></line>
+              <line x1="8" y1="2" x2="8" y2="6"></line>
+              <line x1="3" y1="10" x2="21" y2="10"></line>
+            </svg>
+            <span>Daily Contest Tracker</span>
+            <span class="nav-badge-pill" id="currentContestNavPill">05.10.2026</span>
+          </button>
+
+          <button class="nav-tab" data-view="admin" id="navTabAdmin">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"></path>
+            </svg>
+            <span>Faculty & Admin Portal</span>
+            <span class="nav-badge-faculty">Faculty</span>
+          </button>
+        </div>
+      </nav>
+    </header>
+
+    <!-- ================================================================= -->
+    <!-- VIEW 1: OVERALL LEADERBOARD                                       -->
+    <!-- ================================================================= -->
+    <div id="viewOverall" class="portal-view active">
+      <!-- Quick Metrics Strip -->
+      <div class="metrics-strip">
+        <div class="metric-card">
+          <div class="metric-icon metric-icon-users">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path>
+              <circle cx="9" cy="7" r="4"></circle>
+              <path d="M23 21v-2a4 4 0 0 0-3-3.87"></path>
+              <path d="M16 3.13a4 4 0 0 1 0 7.75"></path>
+            </svg>
+          </div>
+          <div class="metric-info">
+            <span class="metric-label">Enrolled Coders</span>
+            <span class="metric-val" id="metricOverallCoders">25</span>
+          </div>
+        </div>
+
+        <div class="metric-card">
+          <div class="metric-icon metric-icon-solved">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"></path>
+              <polyline points="22 4 12 14.01 9 11.01"></polyline>
+            </svg>
+          </div>
+          <div class="metric-info">
+            <span class="metric-label">Total Solved Across College</span>
+            <span class="metric-val" id="metricOverallSolved">18,450</span>
+          </div>
+        </div>
+
+        <div class="metric-card">
+          <div class="metric-icon metric-icon-top">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"></polygon>
+            </svg>
+          </div>
+          <div class="metric-info">
+            <span class="metric-label">College Rank #1 Leader</span>
+            <span class="metric-val text-gold" id="metricOverallTopCoder">BHARATHKUMAR A K</span>
+          </div>
+        </div>
+
+        <div class="metric-card">
+          <div class="metric-icon metric-icon-rate">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"></polygon>
+            </svg>
+          </div>
+          <div class="metric-info">
+            <span class="metric-label">Avg. Problems / Coder</span>
+            <span class="metric-val" id="metricOverallAvgSolved">738</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- Top 3 Podium Showcase Section (Hall of Fame) -->
+      <section class="podium-section" aria-label="Top 3 Ranked Students Overall">
+        <div class="section-title-wrap">
+          <h2 class="section-title">Hall of Fame (Overall)</h2>
+          <span class="section-subtitle">Top all-round competitive programming champions across college</span>
+        </div>
+
+        <div class="podium-grid" id="overallPodiumContainer">
+          <!-- Injected via JavaScript -->
+        </div>
+      </section>
+
+      <!-- Overall Controls: Search & Filters -->
+      <section class="leaderboard-controls" aria-label="Search and Filter Controls">
+        <div class="search-box-wrapper">
+          <svg class="search-icon" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <circle cx="11" cy="11" r="8"></circle>
+            <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
+          </svg>
+          <input 
+            type="text" 
+            id="overallSearchInput" 
+            class="search-input" 
+            placeholder="Search by student name or roll number (e.g. BHARATHKUMAR, 711525BCS016)..."
+            autocomplete="off"
+          >
+          <button id="clearOverallSearchBtn" class="clear-search-btn" title="Clear Search" style="display: none;">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <line x1="18" y1="6" x2="6" y2="18"></line>
+              <line x1="6" y1="6" x2="18" y2="18"></line>
+            </svg>
+          </button>
+        </div>
+
+        <div class="filters-group">
+          <!-- Department Filter -->
+          <div class="filter-dropdown-wrap">
+            <label for="overallDeptFilter" class="filter-label">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <rect x="2" y="7" width="20" height="14" rx="2" ry="2"></rect>
+                <path d="M16 21V5a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v16"></path>
+              </svg>
+              Department
+            </label>
+            <div class="select-container">
+              <select id="overallDeptFilter" class="styled-select">
+                <option value="ALL">All Departments</option>
+                <option value="CSE">CSE</option>
+                <option value="IT">IT</option>
+                <option value="ECE">ECE</option>
+                <option value="AI&DS">AI&DS</option>
+                <option value="CSBS">CSBS</option>
+                <option value="EEE">EEE</option>
+              </select>
+            </div>
+          </div>
+
+          <!-- Year Filter -->
+          <div class="filter-dropdown-wrap">
+            <label for="overallYearFilter" class="filter-label">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect>
+                <line x1="16" y1="2" x2="16" y2="6"></line>
+                <line x1="8" y1="2" x2="8" y2="6"></line>
+                <line x1="3" y1="10" x2="21" y2="10"></line>
+              </svg>
+              Year
+            </label>
+            <div class="select-container">
+              <select id="overallYearFilter" class="styled-select">
+                <option value="ALL">All Years</option>
+                <option value="1">1st Year</option>
+                <option value="2">2nd Year</option>
+                <option value="3">3rd Year</option>
+                <option value="4">4th Year</option>
+              </select>
+            </div>
+          </div>
+
+          <!-- Sort Option -->
+          <div class="filter-dropdown-wrap">
+            <label for="overallSortBySelect" class="filter-label">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <line x1="18" y1="20" x2="18" y2="10"></line>
+                <line x1="12" y1="20" x2="12" y2="4"></line>
+                <line x1="6" y1="20" x2="6" y2="14"></line>
+              </svg>
+              Sort By
+            </label>
+            <div class="select-container">
+              <select id="overallSortBySelect" class="styled-select">
+                <option value="total_desc">Total Solved (Highest First)</option>
+                <option value="total_asc">Total Solved (Lowest First)</option>
+                <option value="rank_asc">Rank (1 to N)</option>
+                <option value="name_asc">Name (A-Z)</option>
+                <option value="leetcode_desc">LeetCode Solved</option>
+                <option value="cf_desc">Codeforces Rating</option>
+              </select>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- Platform Quick Tab Pills -->
+      <div class="platform-tabs-bar">
+        <div class="platform-tabs" id="overallPlatformTabs">
+          <button class="platform-tab active" data-platform="all">
+            <span>Overall Standing</span>
+          </button>
+          <button class="platform-tab" data-platform="leetcode">
+            <span class="platform-dot dot-leetcode"></span> LeetCode Focus
+          </button>
+          <button class="platform-tab" data-platform="codeforces">
+            <span class="platform-dot dot-codeforces"></span> Codeforces Focus
+          </button>
+          <button class="platform-tab" data-platform="codechef">
+            <span class="platform-dot dot-codechef"></span> CodeChef Focus
+          </button>
+          <button class="platform-tab" data-platform="atcoder">
+            <span class="platform-dot dot-atcoder"></span> AtCoder Focus
+          </button>
+        </div>
+
+        <div class="results-stats">
+          <span id="overallResultsCount">Showing 0 of 0 students</span>
+          <button id="exportOverallCsvBtn" class="btn-text" title="Export Current Filtered List to CSV">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
+              <polyline points="7 10 12 15 17 10"></polyline>
+              <line x1="12" y1="15" x2="12" y2="3"></line>
+            </svg>
+            Export CSV
+          </button>
+        </div>
+      </div>
+
+      <!-- Overall Leaderboard Table -->
+      <main class="table-section">
+        <div class="table-card">
+          <div class="table-responsive">
+            <table class="leaderboard-table" id="overallLeaderboardTable">
+              <thead>
+                <tr>
+                  <th class="th-rank" data-sort="rank"><span class="th-content">Rank <span class="sort-indicator"></span></span></th>
+                  <th class="th-student" data-sort="name"><span class="th-content">Student Info <span class="sort-indicator"></span></span></th>
+                  <th class="th-dept" data-sort="dept"><span class="th-content">Department <span class="sort-indicator"></span></span></th>
+                  <th class="th-year" data-sort="year"><span class="th-content">Year <span class="sort-indicator"></span></span></th>
+                  <th class="th-platforms"><span class="th-content">Platform Breakdown</span></th>
+                  <th class="th-solved" data-sort="total"><span class="th-content">Total Solved <span class="sort-indicator">▼</span></span></th>
+                  <th class="th-action"><span class="th-content">Profile</span></th>
+                </tr>
+              </thead>
+              <tbody id="overallLeaderboardBody">
+                <!-- Dynamically populated rows -->
+              </tbody>
+            </table>
+          </div>
+
+          <div id="noOverallResultsState" class="empty-state" style="display: none;">
+            <div class="empty-icon">
+              <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+                <circle cx="11" cy="11" r="8"></circle>
+                <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
+              </svg>
+            </div>
+            <h3>No students match your criteria</h3>
+            <p>Try resetting your search query or department/year filters.</p>
+            <button id="resetOverallFiltersBtn" class="btn btn-secondary">Reset All Filters</button>
+          </div>
+        </div>
+      </main>
+    </div>
+
+    <!-- ================================================================= -->
+    <!-- VIEW 2: DAILY CONTEST TRACKER (Spreadsheet Mode)                  -->
+    <!-- ================================================================= -->
+    <div id="viewContest" class="portal-view">
+      <!-- Contest Date Selector Bar (Excel/Google Sheet style tabs) -->
+      <div class="contest-dates-bar">
+        <div class="contest-dates-label">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect>
+            <line x1="16" y1="2" x2="16" y2="6"></line>
+            <line x1="8" y1="2" x2="8" y2="6"></line>
+            <line x1="3" y1="10" x2="21" y2="10"></line>
+          </svg>
+          <span>Spreadsheet Tab:</span>
+        </div>
+        <div class="contest-date-tabs" id="contestDateTabs">
+          <!-- Populated via JS: 05.10.2026, 30.09.2026, etc. -->
+        </div>
+      </div>
+
+      <!-- Contest Metrics Strip -->
+      <div class="metrics-strip">
+        <div class="metric-card">
+          <div class="metric-icon metric-icon-users">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path>
+              <circle cx="9" cy="7" r="4"></circle>
+              <path d="M23 21v-2a4 4 0 0 0-3-3.87"></path>
+              <path d="M16 3.13a4 4 0 0 1 0 7.75"></path>
+            </svg>
+          </div>
+          <div class="metric-info">
+            <span class="metric-label">Batch Strength</span>
+            <span class="metric-val" id="metricContestTotal">21</span>
+          </div>
+        </div>
+
+        <div class="metric-card">
+          <div class="metric-icon metric-icon-solved">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"></path>
+              <polyline points="22 4 12 14.01 9 11.01"></polyline>
+            </svg>
+          </div>
+          <div class="metric-info">
+            <span class="metric-label">Participated (&gt;0 Solved)</span>
+            <span class="metric-val text-emerald" id="metricContestParticipated">20 (95%)</span>
+          </div>
+        </div>
+
+        <div class="metric-card">
+          <div class="metric-icon metric-icon-absent">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <circle cx="12" cy="12" r="10"></circle>
+              <line x1="15" y1="9" x2="9" y2="15"></line>
+              <line x1="9" y1="9" x2="15" y2="15"></line>
+            </svg>
+          </div>
+          <div class="metric-info">
+            <span class="metric-label">0 Solved / Absent</span>
+            <span class="metric-val text-rose" id="metricContestAbsent">1 (5%)</span>
+          </div>
+        </div>
+
+        <div class="metric-card">
+          <div class="metric-icon metric-icon-top">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"></polygon>
+            </svg>
+          </div>
+          <div class="metric-info">
+            <span class="metric-label">Max Solved in Contest</span>
+            <span class="metric-val text-gold" id="metricContestMaxSolved">3 Problems</span>
+          </div>
+        </div>
+
+        <div class="metric-card">
+          <div class="metric-icon metric-icon-rate">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"></polygon>
+            </svg>
+          </div>
+          <div class="metric-info">
+            <span class="metric-label">Avg Problems / Active</span>
+            <span class="metric-val" id="metricContestAvgSolved">2.1 / Coder</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- Problem Solved Breakdown Distribution -->
+      <div class="distribution-card">
+        <div class="distribution-header">
+          <span class="dist-title">Class Contest Distribution:</span>
+          <div class="dist-legends" id="distLegends"></div>
+        </div>
+        <div class="dist-stacked-bar" id="distStackedBar"></div>
+      </div>
+
+      <!-- Top 3 Podium for this Contest -->
+      <section class="podium-section" aria-label="Top 3 Ranked Students for Selected Contest">
+        <div class="section-title-wrap">
+          <h2 class="section-title">Contest Champions</h2>
+          <span class="section-subtitle">Top performers in selected CodeChef contest</span>
+        </div>
+
+        <div class="podium-grid" id="contestPodiumContainer">
+          <!-- Injected via JavaScript -->
+        </div>
+      </section>
+
+      <!-- Contest Controls: Search & Filters -->
+      <section class="leaderboard-controls" aria-label="Search and Filter Controls">
+        <div class="search-box-wrapper">
+          <svg class="search-icon" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <circle cx="11" cy="11" r="8"></circle>
+            <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
+          </svg>
+          <input 
+            type="text" 
+            id="contestSearchInput" 
+            class="search-input" 
+            placeholder="Search by student name or register number (e.g. BHARATHKUMAR, 711525BCS016)..."
+            autocomplete="off"
+          >
+          <button id="clearContestSearchBtn" class="clear-search-btn" title="Clear Search" style="display: none;">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <line x1="18" y1="6" x2="6" y2="18"></line>
+              <line x1="6" y1="6" x2="18" y2="18"></line>
+            </svg>
+          </button>
+        </div>
+
+        <div class="filters-group">
+          <!-- Problems Solved Filter -->
+          <div class="filter-dropdown-wrap">
+            <label for="contestSolvedFilter" class="filter-label">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <polyline points="22 12 18 12 15 21 9 3 6 12 2 12"></polyline>
+              </svg>
+              Problems Solved
+            </label>
+            <div class="select-container">
+              <select id="contestSolvedFilter" class="styled-select">
+                <option value="ALL">All Students</option>
+                <option value="3">3 Problems (Top)</option>
+                <option value="2">2 Problems</option>
+                <option value="1">1 Problem</option>
+                <option value="0">0 Solved / Absent</option>
+              </select>
+            </div>
+          </div>
+
+          <!-- Participation Filter -->
+          <div class="filter-dropdown-wrap">
+            <label for="contestParticipationFilter" class="filter-label">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <path d="M16 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path>
+                <circle cx="9" cy="7" r="4"></circle>
+              </svg>
+              Faculty Status
+            </label>
+            <div class="select-container">
+              <select id="contestParticipationFilter" class="styled-select">
+                <option value="ALL">All Records</option>
+                <option value="PARTICIPATED">Participated Only (&gt; 0 Solved)</option>
+                <option value="ABSENT">Absent / 0 Solved Only</option>
+                <option value="HAS_REASON">Has Reason Provided</option>
+              </select>
+            </div>
+          </div>
+
+          <!-- Sort Option -->
+          <div class="filter-dropdown-wrap">
+            <label for="contestSortBySelect" class="filter-label">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <line x1="18" y1="20" x2="18" y2="10"></line>
+                <line x1="12" y1="20" x2="12" y2="4"></line>
+                <line x1="6" y1="20" x2="6" y2="14"></line>
+              </svg>
+              Sort By
+            </label>
+            <div class="select-container">
+              <select id="contestSortBySelect" class="styled-select">
+                <option value="solved_desc">Problems Solved (Highest First)</option>
+                <option value="rating_desc">Current Rating</option>
+                <option value="global_asc">Global Rank</option>
+                <option value="reg_asc">Register Number</option>
+                <option value="name_asc">Student Name (A-Z)</option>
+              </select>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- Quick Filter Pills -->
+      <div class="platform-tabs-bar">
+        <div class="platform-tabs" id="contestQuickFilterPills">
+          <button class="platform-tab active" data-filter="all"><span>All Students</span></button>
+          <button class="platform-tab" data-filter="3_solved"><span class="solve-dot dot-3"></span> 3 Solved (Top)</button>
+          <button class="platform-tab" data-filter="2_solved"><span class="solve-dot dot-2"></span> 2 Solved</button>
+          <button class="platform-tab" data-filter="1_solved"><span class="solve-dot dot-1"></span> 1 Solved</button>
+          <button class="platform-tab" data-filter="absent"><span class="solve-dot dot-0"></span> Absent / 0 Solved</button>
+        </div>
+
+        <div class="results-stats">
+          <span id="contestResultsCount">Showing 0 of 0 students</span>
+          <button id="exportContestCsvBtn" class="btn-text" title="Export Current Filtered List to CSV">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
+              <polyline points="7 10 12 15 17 10"></polyline>
+              <line x1="12" y1="15" x2="12" y2="3"></line>
+            </svg>
+            Export CSV
+          </button>
+        </div>
+      </div>
+
+      <!-- Contest Leaderboard Table (Exact College Sheet Columns) -->
+      <main class="table-section">
+        <div class="table-card">
+          <div class="table-responsive">
+            <table class="leaderboard-table" id="contestLeaderboardTable">
+              <thead>
+                <tr>
+                  <th class="th-rank" data-sort="rank"><span class="th-content">Rank <span class="sort-indicator"></span></span></th>
+                  <th class="th-student" data-sort="name"><span class="th-content">Name of the Student <span class="sort-indicator"></span></span></th>
+                  <th class="th-reg" data-sort="reg"><span class="th-content">Register Number <span class="sort-indicator"></span></span></th>
+                  <th class="th-solved" data-sort="solved"><span class="th-content">No of Problems Solved <span class="sort-indicator">▼</span></span></th>
+                  <th class="th-reason"><span class="th-content">If No Reason / Status</span></th>
+                  <th class="th-rating" data-sort="rating"><span class="th-content">Current Rating <span class="sort-indicator"></span></span></th>
+                  <th class="th-highest" data-sort="highest"><span class="th-content">Highest Rating</span></th>
+                  <th class="th-div" data-sort="div"><span class="th-content">Division</span></th>
+                  <th class="th-stars" data-sort="stars"><span class="th-content">Star Rating</span></th>
+                  <th class="th-global" data-sort="global"><span class="th-content">Global Rank</span></th>
+                  <th class="th-country" data-sort="country"><span class="th-content">Country Rank</span></th>
+                </tr>
+              </thead>
+              <tbody id="contestLeaderboardBody">
+                <!-- Populated via JS -->
+              </tbody>
+            </table>
+          </div>
+
+          <div id="noContestResultsState" class="empty-state" style="display: none;">
+            <div class="empty-icon">
+              <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+                <circle cx="11" cy="11" r="8"></circle>
+                <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
+              </svg>
+            </div>
+            <h3>No student records match this filter</h3>
+            <p>Try resetting your search query or participation filters.</p>
+            <button id="resetContestFiltersBtn" class="btn btn-secondary">Reset All Filters</button>
+          </div>
+        </div>
+      </main>
+    </div>
+
+    <!-- ================================================================= -->
+    <!-- VIEW 3: FACULTY & ADMIN MANAGEMENT PORTAL                         -->
+    <!-- ================================================================= -->
+    <div id="viewAdmin" class="portal-view">
+      
+      <!-- Admin Header Banner -->
+      <div class="admin-banner-card">
+        <div class="admin-banner-header">
+          <div>
+            <div class="admin-badge">FACULTY ADMINISTRATION CONTROL</div>
+            <h2 class="admin-banner-title">Class Performance & Attendance Audit</h2>
+            <p class="admin-banner-subtitle">Generate official reports for HOD/Principal, audit non-participants, and manage spreadsheet data.</p>
+          </div>
+          <div class="admin-banner-actions">
+            <button id="adminPrintReportBtn" class="btn btn-primary">
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <polyline points="6 9 6 2 18 2 18 9"></polyline>
+                <path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"></path>
+                <rect x="6" y="14" width="12" height="8"></rect>
+              </svg>
+              <span>Print Official PDF Report</span>
+            </button>
+            <button id="adminCopyWhatsappBtn" class="btn btn-secondary">
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect>
+                <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path>
+              </svg>
+              <span>Copy WhatsApp Announcement</span>
+            </button>
+          </div>
+        </div>
+      </div>
+
+      <!-- Admin Grid: Report Preview & Management Tools -->
+      <div class="admin-grid">
+        
+        <!-- Column Left: Live Faculty Report Preview -->
+        <div class="admin-card report-preview-card">
+          <div class="admin-card-header">
+            <div class="card-title-group">
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
+                <polyline points="14 2 14 8 20 8"></polyline>
+                <line x1="16" y1="13" x2="8" y2="13"></line>
+                <line x1="16" y1="17" x2="8" y2="17"></line>
+              </svg>
+              <h3>Class Performance Summary (Printable Report)</h3>
+            </div>
+            <div class="admin-contest-picker">
+              <label for="adminContestSelect">Contest:</label>
+              <select id="adminContestSelect" class="styled-select-sm">
+                <!-- Populated via JS -->
+              </select>
+            </div>
+          </div>
+
+          <div class="report-document" id="printableReportDocument">
+            <div class="report-college-header">
+              <div class="college-logo-text">COLLEGE OF ENGINEERING & TECHNOLOGY</div>
+              <div class="dept-text">DEPARTMENT OF COMPUTER SCIENCE & ENGINEERING</div>
+              <div class="report-subject">COMPETITIVE PROGRAMMING (CODECHEF) PERFORMANCE AUDIT</div>
+              <div class="report-meta-row">
+                <span>Contest Date: <strong id="repContestDate">05.10.2026</strong></span>
+                <span>Batch: <strong>2025-2029 (711525BCS)</strong></span>
+                <span>Generated: <strong id="repGenDate">06.10.2026</strong></span>
+              </div>
+            </div>
+
+            <!-- Stats Box -->
+            <div class="report-stats-grid">
+              <div class="rep-stat-box">
+                <span class="rep-stat-label">Total Strength</span>
+                <span class="rep-stat-val" id="repTotalStrength">21</span>
+              </div>
+              <div class="rep-stat-box">
+                <span class="rep-stat-label">Active Participants</span>
+                <span class="rep-stat-val text-emerald" id="repActiveCount">20 (95.2%)</span>
+              </div>
+              <div class="rep-stat-box">
+                <span class="rep-stat-label">Absentees / 0 Solved</span>
+                <span class="rep-stat-val text-rose" id="repAbsentCount">1 (4.8%)</span>
+              </div>
+              <div class="rep-stat-box">
+                <span class="rep-stat-label">Batch Pass Rate</span>
+                <span class="rep-stat-val text-gold" id="repPassRate">95.2%</span>
+              </div>
+            </div>
+
+            <!-- Top Performers Section -->
+            <div class="report-section">
+              <h4 class="report-subheading">🌟 TOP PERFORMERS (3 Problems Solved)</h4>
+              <div class="report-pills-list" id="repTopPerformersList">
+                <!-- Injected via JS -->
+              </div>
+            </div>
+
+            <!-- Non-participants Audit Table -->
+            <div class="report-section">
+              <h4 class="report-subheading">⚠️ ABSENTEE & ZERO-SOLVED AUDIT (Faculty Action Required)</h4>
+              <div class="audit-table-wrap">
+                <table class="audit-mini-table">
+                  <thead>
+                    <tr>
+                      <th>Register Number</th>
+                      <th>Student Name</th>
+                      <th>Reason Given</th>
+                      <th>Action Status</th>
+                    </tr>
+                  </thead>
+                  <tbody id="repAbsentTableBody">
+                    <!-- Injected via JS -->
+                  </tbody>
+                </table>
+              </div>
+            </div>
+
+            <div class="report-sign-area">
+              <div class="sign-block">
+                <span class="sign-line"></span>
+                <span>CP Faculty Coordinator</span>
+              </div>
+              <div class="sign-block">
+                <span class="sign-line"></span>
+                <span>Head of Department (CSE)</span>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Column Right: Fast Management Actions -->
+        <div class="admin-side-tools">
+          
+          <!-- Card: Quick Student Reason / Status Editor -->
+          <div class="admin-card">
+            <div class="admin-card-header">
+              <div class="card-title-group">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                  <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path>
+                  <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"></path>
+                </svg>
+                <h3>Update Student Absence Reason</h3>
+              </div>
+            </div>
+
+            <div class="admin-card-body">
+              <p class="tool-desc">When a student submits a medical certificate or valid reason for non-participation, update it here:</p>
+              
+              <div class="form-group">
+                <label for="adminSelectStudent" class="form-label">Select Student:</label>
+                <select id="adminSelectStudent" class="styled-select" style="width: 100%;">
+                  <!-- Populated via JS -->
+                </select>
+              </div>
+
+              <div class="form-group">
+                <label for="adminProblemsSolvedInput" class="form-label">Problems Solved:</label>
+                <select id="adminProblemsSolvedInput" class="styled-select" style="width: 100%;">
+                  <option value="0">0 Problems (Absent)</option>
+                  <option value="1">1 Problem</option>
+                  <option value="2">2 Problems</option>
+                  <option value="3">3 Problems</option>
+                </select>
+              </div>
+
+              <div class="form-group">
+                <label for="adminReasonInput" class="form-label">"If no reason" Remark:</label>
+                <input 
+                  type="text" 
+                  id="adminReasonInput" 
+                  class="form-input" 
+                  placeholder="e.g. Medical leave / OD for Hackathon / Network failure..."
+                >
+              </div>
+
+              <button id="adminSaveReasonBtn" class="btn btn-primary" style="width: 100%;">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                  <polyline points="20 6 9 17 4 12"></polyline>
+                </svg>
+                Save Reason to Dashboard
+              </button>
+            </div>
+          </div>
+
+          <!-- Card: Google Sheet Sync & CSV Import -->
+          <div class="admin-card">
+            <div class="admin-card-header">
+              <div class="card-title-group">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                  <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
+                  <polyline points="7 10 12 15 17 10"></polyline>
+                  <line x1="12" y1="15" x2="12" y2="3"></line>
+                </svg>
+                <h3>Data Export & Spreadsheet Sync</h3>
+              </div>
+            </div>
+
+            <div class="admin-card-body">
+              <div class="quick-admin-links">
+                <button id="adminExportFullReportCsvBtn" class="btn btn-outline" style="width: 100%;">
+                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
+                    <polyline points="7 10 12 15 17 10"></polyline>
+                    <line x1="12" y1="15" x2="12" y2="3"></line>
+                  </svg>
+                  Export Class Contest CSV
+                </button>
+
+                <button id="adminResetDefaultDatasetBtn" class="btn btn-outline" style="width: 100%;">
+                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <polyline points="1 4 1 10 7 10"></polyline>
+                    <path d="M3.51 15a9 9 0 1 0 2.13-9.36L1 10"></path>
+                  </svg>
+                  Reset to Original College Dataset
+                </button>
+              </div>
+            </div>
+          </div>
+
+        </div>
+
+      </div>
+    </div>
+
+    <!-- Footer -->
+    <footer class="main-footer">
+      <div class="footer-content">
+        <p>Campus Competitive Programming Portal • Read-only public dashboard & faculty audit center</p>
+        <p class="footer-note">Real-time sync enabled. Switch views using the top navigation bar.</p>
+      </div>
+    </footer>
+  </div>
+
+  <!-- STUDENT DETAIL MODAL -->
+  <div id="studentDetailModal" class="modal-backdrop" aria-hidden="true" role="dialog">
+    <div class="modal-dialog">
+      <!-- Modal Header -->
+      <div class="modal-header">
+        <div class="modal-header-profile">
+          <div class="modal-avatar" id="modalStudentAvatar">--</div>
+          <div class="modal-profile-text">
+            <div class="modal-tags">
+              <span class="badge" id="modalRankBadge">Rank #1</span>
+              <span class="chip chip-dept" id="modalDeptOrSolvedChip">CSE</span>
+              <span class="chip chip-year" id="modalYearOrDivChip">3rd Year</span>
+            </div>
+            <h2 class="modal-student-name" id="modalStudentName">Student Name</h2>
+            <div class="modal-roll" id="modalStudentRoll">Register Number: 711525BCS016</div>
+          </div>
+        </div>
+        <button id="closeModalBtn" class="modal-close-btn" title="Close Modal (Esc)">
+          <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <line x1="18" y1="6" x2="6" y2="18"></line>
+            <line x1="6" y1="6" x2="18" y2="18"></line>
+          </svg>
+        </button>
+      </div>
+
+      <!-- Modal Body -->
+      <div class="modal-body">
+        
+        <!-- Summary Stats Grid -->
+        <div class="modal-summary-grid">
+          <div class="summary-card">
+            <span class="summary-label">Total Problems Solved</span>
+            <span class="summary-value" id="modalTotalSolved">0</span>
+            <span class="summary-sub" id="modalPercentile">Top Performer</span>
+          </div>
+          <div class="summary-card">
+            <span class="summary-label">CodeChef Rating</span>
+            <span class="summary-value text-accent" id="modalCurrentRating">1540</span>
+            <span class="summary-sub" id="modalHighestRating">Highest: 1580</span>
+          </div>
+          <div class="summary-card">
+            <span class="summary-label">Star & Division</span>
+            <span class="summary-value text-gold" id="modalStarRating">2 Star</span>
+            <span class="summary-sub" id="modalDivisionText">Division 3</span>
+          </div>
+          <div class="summary-card">
+            <span class="summary-label">Global & Country Rank</span>
+            <span class="summary-value" id="modalGlobalRank">8,420</span>
+            <span class="summary-sub" id="modalCountryRank">Country: 7,910</span>
+          </div>
+        </div>
+
+        <!-- Contest Audit Strip -->
+        <div class="audit-box" id="modalAuditBox">
+          <div class="audit-row">
+            <span class="audit-label">Contest Participation Status:</span>
+            <span class="audit-val text-emerald" id="modalParticipationStatus">Active Participant</span>
+          </div>
+          <div class="audit-row" id="modalReasonRow">
+            <span class="audit-label">Absence Reason ("If no reason"):</span>
+            <span class="audit-val text-rose" id="modalReasonText">None</span>
+          </div>
+        </div>
+
+        <!-- Section: Coding Platform Cards -->
+        <h3 class="modal-section-title">Coding Platform Profiles</h3>
+
+        <div class="platform-cards-grid">
+          <!-- CodeChef Card -->
+          <div class="platform-card platform-card-cc">
+            <div class="platform-card-header">
+              <div class="platform-brand">
+                <div class="platform-icon-box cc-box">
+                  <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <circle cx="12" cy="12" r="10"></circle>
+                    <path d="M8 12h8"></path>
+                    <path d="M12 8v8"></path>
+                  </svg>
+                </div>
+                <div>
+                  <h4 class="platform-name">CodeChef</h4>
+                  <div class="platform-handle" id="modalCcHandle">@handle</div>
+                </div>
+              </div>
+              <a href="#" id="modalCcLink" target="_blank" rel="noopener noreferrer" class="platform-link-btn" title="Open CodeChef Profile">
+                <span>View Profile</span>
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                  <path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"></path>
+                  <polyline points="15 3 21 3 21 9"></polyline>
+                  <line x1="10" y1="14" x2="21" y2="3"></line>
+                </svg>
+              </a>
+            </div>
+
+            <div class="platform-stats-row">
+              <div class="stat-pill">
+                <span class="stat-pill-label">Rating</span>
+                <span class="stat-pill-val" id="modalCcRatingBox">1540</span>
+              </div>
+              <div class="stat-pill">
+                <span class="stat-pill-label">Highest</span>
+                <span class="stat-pill-val" id="modalCcPeakBox">1580</span>
+              </div>
+              <div class="stat-pill">
+                <span class="stat-pill-label">Stars</span>
+                <span class="stat-pill-val text-amber" id="modalCcStarsBox">★★</span>
+              </div>
+            </div>
+          </div>
+
+          <!-- LeetCode Card -->
+          <div class="platform-card platform-card-lc">
+            <div class="platform-card-header">
+              <div class="platform-brand">
+                <div class="platform-icon-box lc-box">
+                  <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor">
+                    <path d="M13.483 0a1.374 1.374 0 0 0-.961.438L7.116 6.226l-3.854 4.126a5.266 5.266 0 0 0-1.209 2.104 5.35 5.35 0 0 0-.125.513 5.527 5.527 0 0 0 .062 2.362 5.83 5.83 0 0 0 .349 1.017 5.938 5.938 0 0 0 1.271 1.818l4.277 4.193.039.038c2.248 2.165 5.852 2.133 8.063-.074l2.396-2.392c.54-.54.54-1.414.003-1.955a1.378 1.378 0 0 0-1.951-.003l-2.396 2.392a3.021 3.021 0 0 1-4.28.038l-4.281-4.196a3.08 3.08 0 0 1-.663-.948 2.87 2.87 0 0 1-.182-.53 3.02 3.02 0 0 1-.03-.984 2.923 2.923 0 0 1 .632-1.096l3.853-4.128 5.4-5.782a1.38 1.38 0 0 0-.965-2.333zm4.184 10.742h-7.662c-.76 0-1.378.618-1.378 1.378 0 .76.618 1.378 1.378 1.378h7.662c.76 0 1.378-.618 1.378-1.378 0-.76-.618-1.378-1.378-1.378z"/>
+                  </svg>
+                </div>
+                <div>
+                  <h4 class="platform-name">LeetCode</h4>
+                  <div class="platform-handle" id="modalLcHandle">@handle</div>
+                </div>
+              </div>
+              <a href="#" id="modalLcLink" target="_blank" rel="noopener noreferrer" class="platform-link-btn" title="Open LeetCode Profile">
+                <span>View Profile</span>
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                  <path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"></path>
+                  <polyline points="15 3 21 3 21 9"></polyline>
+                  <line x1="10" y1="14" x2="21" y2="3"></line>
+                </svg>
+              </a>
+            </div>
+
+            <div class="platform-stats-row">
+              <div class="stat-pill">
+                <span class="stat-pill-label">Total Solved</span>
+                <span class="stat-pill-val" id="modalLcSolved">420</span>
+              </div>
+              <div class="stat-pill">
+                <span class="stat-pill-label">Rating</span>
+                <span class="stat-pill-val" id="modalLcRating">1750</span>
+              </div>
+              <div class="stat-pill">
+                <span class="stat-pill-label">Badge</span>
+                <span class="stat-pill-val" id="modalLcBadge">Knight</span>
+              </div>
+            </div>
+          </div>
+        </div>
+
+      </div>
+
+      <!-- Modal Footer -->
+      <div class="modal-footer">
+        <span class="modal-footer-tip">Tip: Press ESC or click anywhere outside to close</span>
+        <button id="modalDismissBtn" class="btn btn-secondary">Done</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- GOOGLE SHEET CONFIGURATION MODAL -->
+  <div id="sheetConfigModal" class="modal-backdrop" aria-hidden="true" role="dialog">
+    <div class="modal-dialog modal-dialog-compact">
+      <div class="modal-header">
+        <div class="modal-header-profile">
+          <div class="modal-avatar avatar-sheet">
+            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
+              <polyline points="14 2 14 8 20 8"></polyline>
+              <line x1="16" y1="13" x2="8" y2="13"></line>
+              <line x1="16" y1="17" x2="8" y2="17"></line>
+            </svg>
+          </div>
+          <div>
+            <h2 class="modal-student-name">Google Sheet Data Connection</h2>
+            <div class="modal-roll">Sync real-time student statistics from your college Google Sheet</div>
+          </div>
+        </div>
+        <button id="closeSheetModalBtn" class="modal-close-btn" title="Close Modal">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <line x1="18" y1="6" x2="6" y2="18"></line>
+            <line x1="6" y1="6" x2="18" y2="18"></line>
+          </svg>
+        </button>
+      </div>
+
+      <div class="modal-body">
+        <div class="sheet-instructions">
+          <h4>How to connect your college Google Sheet:</h4>
+          <ol>
+            <li>Open your Google Sheet containing student CP handles and stats.</li>
+            <li>Click <strong>File &rarr; Share &rarr; Publish to web</strong>.</li>
+            <li>Select <strong>Entire Document</strong> as <strong>Comma-separated values (.csv)</strong> and click <strong>Publish</strong>.</li>
+            <li>Paste the published URL or standard Google Sheet link below:</li>
+          </ol>
+        </div>
+
+        <div class="form-group">
+          <label for="googleSheetUrlInput" class="form-label">Google Sheet URL or Published CSV Link:</label>
+          <input 
+            type="url" 
+            id="googleSheetUrlInput" 
+            class="form-input" 
+            placeholder="https://docs.google.com/spreadsheets/d/.../export?format=csv or /pub?output=csv"
+          >
+          <div class="input-hint" id="sheetUrlStatus">Enter a valid public Google Sheet link or use the pre-loaded dataset.</div>
+        </div>
+
+        <div class="expected-columns-box">
+          <h5>Recognized Column Headers (Auto-detected):</h5>
+          <p class="columns-list">
+            <code>Name of the student</code>, <code>Register Number</code>, <code>No of problems solved</code>, 
+            <code>If no reason</code>, <code>Current Rating</code>, <code>Highest Rating</code>, 
+            <code>Division</code>, <code>Star Rating</code>, <code>Global Rating</code>, <code>Country Rating</code>
+          </p>
+        </div>
+
+        <div class="template-actions">
+          <button id="loadDefaultDatasetBtn" class="btn btn-outline">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"></path>
+              <polyline points="9 11 12 14 22 4"></polyline>
+            </svg>
+            Load College Demo Dataset
+          </button>
+          <button id="copySampleCsvModalBtn" class="btn btn-outline">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect>
+              <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path>
+            </svg>
+            Copy Sample CSV Template
+          </button>
+        </div>
+      </div>
+
+      <div class="modal-footer">
+        <button id="cancelSheetBtn" class="btn btn-secondary">Cancel</button>
+        <button id="saveSheetUrlBtn" class="btn btn-primary">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"></path>
+            <polyline points="17 21 17 13 7 13 7 21"></polyline>
+            <polyline points="7 3 7 8 15 8"></polyline>
+          </svg>
+          Connect & Sync
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Toast Notification Container -->
+  <div id="toastContainer" class="toast-container" aria-live="polite"></div>
+
+  <!-- Scripts -->
+  <script src="app.js"></script>
+</body>
+</html>

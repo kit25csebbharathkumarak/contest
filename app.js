@@ -1068,6 +1068,10 @@ function syncSelectedStudentToForm() {
   if (student) {
     document.getElementById("adminProblemsSolvedInput").value = student.contestSolved;
     document.getElementById("adminReasonInput").value = student.reason || "";
+    const ccInput = document.getElementById("adminCcHandleInput");
+    if (ccInput) ccInput.value = student.codechef?.handle || student.ccHandle || student.regNo.toLowerCase();
+    const lcInput = document.getElementById("adminLcHandleInput");
+    if (lcInput) lcInput.value = student.leetcode?.handle || student.lcHandle || "";
   }
 }
 
@@ -1075,6 +1079,8 @@ function saveStudentReasonAdmin() {
   const studentId = parseInt(document.getElementById("adminSelectStudent").value);
   const solvedCount = parseInt(document.getElementById("adminProblemsSolvedInput").value);
   const reasonText = document.getElementById("adminReasonInput").value.trim();
+  const ccHandle = document.getElementById("adminCcHandleInput")?.value.trim();
+  const lcHandle = document.getElementById("adminLcHandleInput")?.value.trim();
 
   const student = studentsMaster.find(s => s.id === studentId);
   if (!student) return;
@@ -1082,7 +1088,18 @@ function saveStudentReasonAdmin() {
   student.contestSolved = solvedCount;
   student.reason = reasonText;
 
-  showToast(`Updated ${student.name}: Solved=${solvedCount}, Reason="${reasonText || 'None'}"`, true);
+  if (ccHandle) {
+    if (!student.codechef) student.codechef = {};
+    student.codechef.handle = ccHandle;
+    student.ccHandle = ccHandle;
+  }
+  if (lcHandle) {
+    if (!student.leetcode) student.leetcode = {};
+    student.leetcode.handle = lcHandle;
+    student.lcHandle = lcHandle;
+  }
+
+  showToast(`Updated ${student.name}: Handle=@${student.ccHandle || student.regNo}, Solved=${solvedCount}, Reason="${reasonText || 'None'}"`, true);
   
   // Refresh all views
   renderAdminPortal();

@@ -252,6 +252,7 @@ function autoSyncLatestCodeChefContest() {
   const headers = sheet.getRange(1, 1, 1, sheet.getLastColumn()).getValues()[0].map(h => String(h).toLowerCase().trim());
   const nameCol = headers.findIndex(h => h.includes('name')) + 1;
   const regCol = headers.findIndex(h => h.includes('register') || h.includes('roll')) + 1;
+  const handleCol = headers.findIndex(h => h.includes('codechef') || h.includes('handle') || h.includes('username')) + 1;
   const solvedCol = headers.findIndex(h => h.includes('solved')) + 1;
   const reasonCol = headers.findIndex(h => h.includes('reason')) + 1;
   const currentRatingCol = headers.findIndex(h => h.includes('current rating')) + 1;
@@ -267,9 +268,13 @@ function autoSyncLatestCodeChefContest() {
 
   for (let r = 2; r <= lastRow; r++) {
     const studentName = sheet.getRange(r, nameCol).getValue();
-    if (!studentName) continue;
+    const regNo = regCol > 0 ? String(sheet.getRange(r, regCol).getValue()).trim() : '';
+    let handle = handleCol > 0 ? String(sheet.getRange(r, handleCol).getValue()).trim() : '';
 
-    const handle = String(studentName).toLowerCase().replace(/[^a-z0-9]/g, '_');
+    // Auto-resolve handle: prioritize explicit handle, fallback to Register Number, then Name slug
+    if (!handle && regNo) handle = regNo.toLowerCase();
+    if (!handle && studentName) handle = String(studentName).toLowerCase().replace(/[^a-z0-9]/g, '_');
+    if (!handle) continue;
 
     try {
       const url = 'https://www.codechef.com/users/' + encodeURIComponent(handle);

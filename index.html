@@ -752,13 +752,34 @@
             </div>
 
             <div class="admin-card-body">
-              <p class="tool-desc">When a student submits a medical certificate or valid reason for non-participation, update it here:</p>
+              <p class="tool-desc">View or update student platform profile handles, contest problems solved, and absence remarks:</p>
               
               <div class="form-group">
                 <label for="adminSelectStudent" class="form-label">Select Student:</label>
                 <select id="adminSelectStudent" class="styled-select" style="width: 100%;">
                   <!-- Populated via JS -->
                 </select>
+              </div>
+
+              <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px;">
+                <div class="form-group">
+                  <label for="adminCcHandleInput" class="form-label">CodeChef Handle:</label>
+                  <input 
+                    type="text" 
+                    id="adminCcHandleInput" 
+                    class="form-input" 
+                    placeholder="e.g. bharathkumar_ak"
+                  >
+                </div>
+                <div class="form-group">
+                  <label for="adminLcHandleInput" class="form-label">LeetCode Handle:</label>
+                  <input 
+                    type="text" 
+                    id="adminLcHandleInput" 
+                    class="form-input" 
+                    placeholder="e.g. bharathkumar_ak"
+                  >
+                </div>
               </div>
 
               <div class="form-group">
@@ -785,7 +806,7 @@
                 <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                   <polyline points="20 6 9 17 4 12"></polyline>
                 </svg>
-                Save Reason to Dashboard
+                Save Student Profile & Reason
               </button>
             </div>
           </div>

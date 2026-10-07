@@ -802,8 +802,17 @@
             </div>
 
             <div class="admin-card-body">
-              <p class="tool-desc">Automatically fetch real problems solved, ratings, and ranks directly from CodeChef for all 21 students right after the contest finishes:</p>
+              <p class="tool-desc">Automatically fetch real problems solved, ratings, and ranks from CodeChef, create/update the date tab in Google Sheet, and refresh the dashboard:</p>
               
+              <!-- Google Sheet Target Status Strip -->
+              <div class="admin-sheet-target-strip">
+                <div>
+                  <span style="color: var(--text-muted); font-size: 0.78rem;">Google Sheet: </span>
+                  <span id="adminSheetSyncBadge" class="sheet-pill not-connected">⚪ Web App URL Not Set</span>
+                </div>
+                <button id="adminConfigureSheetBtn" class="btn btn-outline btn-sm" type="button" title="Configure Apps Script Web App URL">⚙️ Configure</button>
+              </div>
+
               <div class="form-group">
                 <label for="autoContestPlatform" class="form-label">Platform:</label>
                 <select id="autoContestPlatform" class="styled-select" style="width: 100%;">
@@ -819,7 +828,7 @@
                   id="autoContestCodeInput" 
                   class="form-input" 
                   value="START155" 
-                  placeholder="e.g. START155, START154"
+                  placeholder="e.g. START155, START180"
                 >
                 <div class="input-hint">Enter the CodeChef contest code (e.g. START155 for yesterday's Starters).</div>
               </div>
@@ -830,17 +839,43 @@
                   type="text" 
                   id="autoContestDateInput" 
                   class="form-input" 
-                  value="05.10.2026" 
-                  placeholder="e.g. 05.10.2026"
+                  value="07.10.2026" 
+                  placeholder="e.g. 07.10.2026"
                 >
               </div>
 
-              <button id="triggerAutoSyncBtn" class="btn btn-primary" style="width: 100%;">
-                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                  <polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"></polygon>
-                </svg>
-                ⚡ Fetch Real Data & Update Leaderboard
-              </button>
+              <!-- Options -->
+              <label class="styled-checkbox-row">
+                <input type="checkbox" id="adminAutoUpdateSheetToggle" checked>
+                <div class="styled-checkbox-label">
+                  <span>⚡ Automatically update Google Sheet tab on sync</span>
+                  <span class="styled-checkbox-sub">Creates date tab & color-codes 3=Green, 2=Light Green, 1=Orange, 0=Red</span>
+                </div>
+              </label>
+
+              <label class="styled-checkbox-row">
+                <input type="checkbox" id="adminAutoSyncToggle">
+                <div class="styled-checkbox-label">
+                  <span>🔄 Background Auto-Sync (Every 5 minutes)</span>
+                  <span class="styled-checkbox-sub">Automatically checks for contest updates & syncs sheet in background</span>
+                </div>
+              </label>
+
+              <div style="display: flex; gap: 10px; flex-wrap: wrap;">
+                <button id="triggerAutoSyncBtn" class="btn btn-primary" style="flex: 1;">
+                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"></polygon>
+                  </svg>
+                  ⚡ Auto-Fetch & Update Google Sheet
+                </button>
+                <button id="adminCopyScriptBtn" class="btn btn-secondary" type="button" title="Copy Google Apps Script code for your sheet">
+                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect>
+                    <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path>
+                  </svg>
+                  <span>📋 Copy Script</span>
+                </button>
+              </div>
 
               <!-- Live Progress Feed -->
               <div id="syncProgressContainer" class="sync-progress-box" style="display: none;">
@@ -852,7 +887,7 @@
               </div>
 
               <div class="automation-options-strip">
-                <span class="chip chip-dept">🔄 Auto-Sync Scheduled: Every Wed 22:45 IST</span>
+                <span class="chip chip-dept">🔄 Scheduled Auto-Sync: Every Wed 22:45 IST</span>
               </div>
             </div>
           </div>
@@ -1372,7 +1407,7 @@
 
   <!-- GOOGLE SHEET CONFIGURATION MODAL -->
   <div id="sheetConfigModal" class="modal-backdrop" aria-hidden="true" role="dialog">
-    <div class="modal-dialog modal-dialog-compact">
+    <div class="modal-dialog modal-dialog-sheet">
       <div class="modal-header">
         <div class="modal-header-profile">
           <div class="modal-avatar avatar-sheet">
@@ -1385,7 +1420,7 @@
           </div>
           <div>
             <h2 class="modal-student-name">Google Sheet Data Connection</h2>
-            <div class="modal-roll">Sync real-time student statistics from your college Google Sheet</div>
+            <div class="modal-roll">Automate real-time updates between website dashboard and college Google Sheet</div>
           </div>
         </div>
         <button id="closeSheetModalBtn" class="modal-close-btn" title="Close Modal">
@@ -1397,63 +1432,158 @@
       </div>
 
       <div class="modal-body">
-        <div class="sheet-instructions">
-          <h4>How to connect your college Google Sheet:</h4>
-          <ol>
-            <li>Open your Google Sheet containing student CP handles and stats.</li>
-            <li>Click <strong>File &rarr; Share &rarr; Publish to web</strong>.</li>
-            <li>Select <strong>Entire Document</strong> as <strong>Comma-separated values (.csv)</strong> and click <strong>Publish</strong>.</li>
-            <li>Paste the published URL or standard Google Sheet link below:</li>
-          </ol>
-        </div>
-
-        <div class="form-group">
-          <label for="googleSheetUrlInput" class="form-label">Google Sheet URL or Published CSV Link:</label>
-          <input 
-            type="url" 
-            id="googleSheetUrlInput" 
-            class="form-input" 
-            placeholder="https://docs.google.com/spreadsheets/d/.../export?format=csv or /pub?output=csv"
-          >
-          <div class="input-hint" id="sheetUrlStatus">Enter a valid public Google Sheet link or use the pre-loaded dataset.</div>
-        </div>
-
-        <div class="expected-columns-box">
-          <h5>Recognized Column Headers (Auto-detected):</h5>
-          <p class="columns-list">
-            <code>Name of the student</code>, <code>Register Number</code>, <code>No of problems solved</code>, 
-            <code>If no reason</code>, <code>Current Rating</code>, <code>Highest Rating</code>, 
-            <code>Division</code>, <code>Star Rating</code>, <code>Global Rating</code>, <code>Country Rating</code>
-          </p>
-        </div>
-
-        <div class="template-actions">
-          <button id="loadDefaultDatasetBtn" class="btn btn-outline">
+        
+        <!-- Tab Bar Switcher -->
+        <div class="modal-subtabs">
+          <button type="button" class="modal-subtab active" id="modalSubtabAppsScript" data-tab="appsscript">
             <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-              <path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"></path>
-              <polyline points="9 11 12 14 22 4"></polyline>
+              <polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"></polygon>
             </svg>
-            Load College Demo Dataset
+            <span>⚡ 2-Way Auto-Update (Apps Script)</span>
           </button>
-          <button id="copySampleCsvModalBtn" class="btn btn-outline">
+          <button type="button" class="modal-subtab" id="modalSubtabCsv" data-tab="csv">
             <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-              <rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect>
-              <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path>
+              <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
+              <polyline points="14 2 14 8 20 8"></polyline>
             </svg>
-            Copy Sample CSV Template
+            <span>📖 Read-Only CSV / Sheet Link</span>
           </button>
         </div>
+
+        <!-- TAB 1: 2-WAY APPS SCRIPT WEB APP -->
+        <div id="tabPanelAppsScript" class="modal-tab-panel">
+          <div id="sheetStatusBanner" class="status-alert-box status-alert-info">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="flex-shrink: 0; margin-top: 1px;">
+              <circle cx="12" cy="12" r="10"></circle>
+              <line x1="12" y1="16" x2="12" y2="12"></line>
+              <line x1="12" y1="8" x2="12.01" y2="8"></line>
+            </svg>
+            <div>
+              <strong>Two-Way Live Sync:</strong> When configured, the website automatically creates contest tabs in your Google Sheet, formats headers, and applies college color badges (3=Green, 2=Light Green, 1=Orange, 0=Red).
+            </div>
+          </div>
+
+          <div class="form-group">
+            <label for="googleAppsScriptUrlInput" class="form-label">Google Apps Script Web App URL:</label>
+            <input 
+              type="url" 
+              id="googleAppsScriptUrlInput" 
+              class="form-input" 
+              placeholder="https://script.google.com/macros/s/.../exec"
+            >
+            <div class="input-hint" id="appsScriptUrlHint">Paste the Web App URL generated after deploying GoogleAppsScript_CodeChef_AutoSync.js in your sheet.</div>
+          </div>
+
+          <!-- Quick Action Buttons -->
+          <div style="display: flex; gap: 10px; flex-wrap: wrap;">
+            <button id="copyAppsScriptCodeBtn" type="button" class="btn btn-secondary btn-sm" style="flex: 1;">
+              <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect>
+                <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path>
+              </svg>
+              <span>📋 Copy Google Apps Script Code</span>
+            </button>
+            <button id="pushToGoogleSheetBtn" type="button" class="btn btn-primary btn-sm" style="flex: 1;">
+              <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"></path>
+                <polyline points="17 21 17 13 7 13 7 21"></polyline>
+              </svg>
+              <span>⚡ Push Real Data to Sheet Now</span>
+            </button>
+          </div>
+
+          <!-- Background Automation Toggle -->
+          <label class="styled-checkbox-row">
+            <input type="checkbox" id="autoSyncIntervalToggle">
+            <div class="styled-checkbox-label">
+              <span>🔄 Automatically Sync Every 5 Minutes in Background</span>
+              <span class="styled-checkbox-sub">Fetches real contest stats, updates Google Sheet, and keeps website live</span>
+            </div>
+          </label>
+
+          <!-- 1-Minute Setup Guide -->
+          <div class="setup-steps-list">
+            <h5 style="color: #fff; font-size: 0.8rem; margin: 0;">1-Minute Setup in Google Sheets:</h5>
+            <div class="setup-step-item">
+              <span class="setup-step-num">1</span>
+              <span>Open your Google Sheet &rarr; Click <strong>Extensions &rarr; Apps Script</strong></span>
+            </div>
+            <div class="setup-step-item">
+              <span class="setup-step-num">2</span>
+              <span>Click <strong>"Copy Google Apps Script Code"</strong> above and paste it into Code.gs</span>
+            </div>
+            <div class="setup-step-item">
+              <span class="setup-step-num">3</span>
+              <span>Click <strong>Deploy &rarr; New deployment &rarr; Web app</strong> (Who has access: <strong>Anyone</strong>)</span>
+            </div>
+            <div class="setup-step-item">
+              <span class="setup-step-num">4</span>
+              <span>Copy the resulting <code>/exec</code> URL and paste it in the box above!</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- TAB 2: READ-ONLY CSV LINK -->
+        <div id="tabPanelCsv" class="modal-tab-panel" style="display: none;">
+          <div class="sheet-instructions">
+            <h4>How to connect a Published Google Sheet (Read-Only):</h4>
+            <ol>
+              <li>Open your Google Sheet containing student CP handles and stats.</li>
+              <li>Click <strong>File &rarr; Share &rarr; Publish to web</strong>.</li>
+              <li>Select <strong>Entire Document</strong> as <strong>Comma-separated values (.csv)</strong> and click <strong>Publish</strong>.</li>
+              <li>Paste the published URL or standard Google Sheet link below:</li>
+            </ol>
+          </div>
+
+          <div class="form-group">
+            <label for="googleSheetUrlInput" class="form-label">Google Sheet URL or Published CSV Link:</label>
+            <input 
+              type="url" 
+              id="googleSheetUrlInput" 
+              class="form-input" 
+              placeholder="https://docs.google.com/spreadsheets/d/.../export?format=csv or /pub?output=csv"
+            >
+            <div class="input-hint" id="sheetUrlStatus">Enter a valid public Google Sheet link or use the pre-loaded dataset.</div>
+          </div>
+
+          <div class="expected-columns-box">
+            <h5>Recognized Column Headers (Auto-detected):</h5>
+            <p class="columns-list">
+              <code>Name of the student</code>, <code>Register Number</code>, <code>No of problems solved</code>, 
+              <code>If no reason</code>, <code>Current Rating</code>, <code>Highest Rating</code>, 
+              <code>Division</code>, <code>Star Rating</code>, <code>Global Rating</code>, <code>Country Rating</code>
+            </p>
+          </div>
+
+          <div class="template-actions">
+            <button id="loadDefaultDatasetBtn" type="button" class="btn btn-outline">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"></path>
+                <polyline points="9 11 12 14 22 4"></polyline>
+              </svg>
+              Load College Demo Dataset
+            </button>
+            <button id="copySampleCsvModalBtn" type="button" class="btn btn-outline">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect>
+                <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path>
+              </svg>
+              Copy Sample CSV Template
+            </button>
+          </div>
+        </div>
+
       </div>
 
       <div class="modal-footer">
-        <button id="cancelSheetBtn" class="btn btn-secondary">Cancel</button>
-        <button id="saveSheetUrlBtn" class="btn btn-primary">
+        <button id="cancelSheetBtn" type="button" class="btn btn-secondary">Close</button>
+        <button id="saveSheetUrlBtn" type="button" class="btn btn-primary">
           <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
             <path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"></path>
             <polyline points="17 21 17 13 7 13 7 21"></polyline>
             <polyline points="7 3 7 8 15 8"></polyline>
           </svg>
-          Connect & Sync
+          Save Settings & Sync
         </button>
       </div>
     </div>

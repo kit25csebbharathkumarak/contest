@@ -23,13 +23,23 @@ The portal now features **3 ways to automatically fetch real contest data** (pro
 - Enter any contest code (e.g. `START155`, `START154`) and click **"⚡ Fetch Real Data & Update Leaderboard"**.
 - Displays a real-time progress bar and log stream as it syncs all student handles and updates rankings immediately.
 
-### 3. 📑 Google Sheets Auto-Sync (Apps Script)
-- File: [`GoogleAppsScript_CodeChef_AutoSync.js`](GoogleAppsScript_CodeChef_AutoSync.js)
-- For faculty who maintain the Google Sheet:
-  1. In Google Sheets, click **Extensions &rarr; Apps Script**.
-  2. Paste the code from `GoogleAppsScript_CodeChef_AutoSync.js` and click **Save**.
-  3. Reload your sheet to get the **"🏆 Contest Tools"** menu with **"⚡ Auto-Fetch CodeChef Contest Data"**.
-  4. Set a weekly time trigger in Apps Script to populate the sheet automatically every Wednesday night!
+### 3. 📑 Real-Time 2-Way Google Sheets Sync Engine
+- Script File: [`GoogleAppsScript_CodeChef_AutoSync.js`](GoogleAppsScript_CodeChef_AutoSync.js)
+- **Direct Automation between Website and Google Sheet**:
+  - The website dashboard automatically writes contest records directly into your Google Sheet!
+  - It creates/updates the contest date tab (e.g. `07.10.2026`), adds official college headers, and applies the exact color codes:
+    - **3 Solved**: Dark Green (`#14532d`)
+    - **2 Solved**: Light Green (`#166534`)
+    - **1 Solved**: Orange (`#7c2d12`)
+    - **0 Solved**: Red (`#7f1d1d`)
+- **1-Minute Setup**:
+  1. Open your college Google Sheet &rarr; Click **Extensions &rarr; Apps Script**.
+  2. In the website, click the **Google Sheet** button &rarr; click **"📋 Copy Google Apps Script Code"**.
+  3. Paste the code into `Code.gs` and click **Deploy &rarr; New deployment &rarr; Web app** (Who has access: **Anyone**).
+  4. Copy the Web App URL and paste it into the website dashboard!
+- **Automatic 5-Minute Background Polling**:
+  - Enable the checkbox **"🔄 Automatically Sync Every 5 Minutes in Background"** in the Google Sheet modal or Faculty Admin Portal.
+  - The website will continuously fetch new contest records, write to Google Sheet, and keep the dashboard updated live!
 
 ---
 

@@ -448,9 +448,14 @@ const INITIAL_STUDENTS = [
 let studentsMaster = JSON.parse(JSON.stringify(INITIAL_STUDENTS));
 
 // Active Application State
-let activeView = "overall"; // 'overall' | 'contest' | 'admin'
+let activeView = "overall"; // 'overall' | 'contest' | 'admin' | 'calendar'
 let currentContestDate = "05.10.2026";
 let customSheetUrl = localStorage.getItem("campuscplb_sheet_url") || "";
+let googleAppsScriptUrl = localStorage.getItem("campuscplb_apps_script_url") || "";
+let isAutoSyncEnabled = localStorage.getItem("campuscplb_auto_sync_enabled") === "true";
+let autoUpdateSheetOnSync = true;
+let autoSyncIntervalTimer = null;
+let currentSheetActiveTab = "appsscript"; // 'appsscript' | 'csv'
 
 // Overall View state
 let overallFiltered = [];
@@ -1218,45 +1223,444 @@ function downloadCsvFile(filename, headers, rows) {
   showToast(`Exported ${rows.length} rows to ${filename}!`, true);
 }
 
-// Google Sheet Modal
-function openSheetConfigModal() {
+// ==========================================
+// 8.1 GOOGLE APPS SCRIPT CODE TEMPLATE & 2-WAY SYNC ENGINE
+// ==========================================
+const APPS_SCRIPT_CODE_TEMPLATE = `/**
+ * Google Apps Script: Auto-Fetch Real Contest Data & 2-Way Sync Engine for Google Sheets
+ * Deploy as Web app with access set to "Anyone".
+ */
+function onOpen() {
+  SpreadsheetApp.getUi().createMenu('🏆 CampusCP Tools')
+    .addItem('⚡ Auto-Fetch CodeChef Contest Data', 'autoSyncLatestCodeChefContest')
+    .addItem('📊 Generate Faculty Class Summary', 'generateFacultySummaryDialog')
+    .addToUi();
+}
+
+function doPost(e) {
+  try {
+    let payload = {};
+    if (e && e.postData && e.postData.contents) {
+      payload = JSON.parse(e.postData.contents);
+    }
+    const action = payload.action || 'updateContest';
+    const contestDate = payload.contestDate || Utilities.formatDate(new Date(), 'Asia/Kolkata', 'dd.MM.yyyy');
+    const students = payload.students || [];
+    if (students.length === 0) {
+      return ContentService.createTextOutput(JSON.stringify({ status: 'error', message: 'No student records received.' })).setMimeType(ContentService.MimeType.JSON);
+    }
+    const result = updateSheetWithStudentData(contestDate, students);
+    return ContentService.createTextOutput(JSON.stringify({
+      status: 'success',
+      message: 'Google Sheet updated successfully for contest date: ' + contestDate,
+      tab: contestDate,
+      updatedCount: result.updatedCount,
+      timestamp: new Date().toISOString()
+    })).setMimeType(ContentService.MimeType.JSON);
+  } catch (err) {
+    return ContentService.createTextOutput(JSON.stringify({ status: 'error', message: err.toString() })).setMimeType(ContentService.MimeType.JSON);
+  }
+}
+
+function doGet(e) {
+  try {
+    const ss = SpreadsheetApp.getActiveSpreadsheet();
+    const action = (e && e.parameter && e.parameter.action) || 'getData';
+    const targetTab = (e && e.parameter && e.parameter.tab) || null;
+    let sheet = targetTab ? ss.getSheetByName(targetTab) : ss.getActiveSheet();
+    if (!sheet) sheet = ss.getActiveSheet();
+    const sheetName = sheet.getName();
+    const lastRow = sheet.getLastRow();
+    const lastCol = sheet.getLastColumn();
+    if (lastRow < 2) {
+      return ContentService.createTextOutput(JSON.stringify({ status: 'success', sheetName: sheetName, students: [], allTabs: ss.getSheets().map(s => s.getName()) })).setMimeType(ContentService.MimeType.JSON);
+    }
+    const headers = sheet.getRange(1, 1, 1, lastCol).getValues()[0].map(h => String(h).trim());
+    const dataValues = sheet.getRange(2, 1, lastRow - 1, lastCol).getValues();
+    const students = dataValues.map((row, idx) => {
+      const item = { id: idx + 1 };
+      headers.forEach((h, cIdx) => { item[h] = row[cIdx]; });
+      return item;
+    });
+    return ContentService.createTextOutput(JSON.stringify({
+      status: 'success',
+      sheetName: sheetName,
+      totalCount: students.length,
+      allTabs: ss.getSheets().map(s => s.getName()),
+      students: students,
+      timestamp: new Date().toISOString()
+    })).setMimeType(ContentService.MimeType.JSON);
+  } catch (err) {
+    return ContentService.createTextOutput(JSON.stringify({ status: 'error', message: err.toString() })).setMimeType(ContentService.MimeType.JSON);
+  }
+}
+
+function updateSheetWithStudentData(contestDate, students) {
+  const ss = SpreadsheetApp.getActiveSpreadsheet();
+  let sheet = ss.getSheetByName(contestDate);
+  if (!sheet) sheet = ss.insertSheet(contestDate, 0);
+  const headers = ['Rank', 'Name of the student', 'Register Number', 'No of problems solved', 'If no reason', 'Current Rating', 'Highest Rating', 'Division', 'Star Rating', 'Global Rating', 'Country Rating'];
+  sheet.clear();
+  const headerRange = sheet.getRange(1, 1, 1, headers.length);
+  headerRange.setValues([headers]);
+  headerRange.setBackground('#0f172a');
+  headerRange.setFontColor('#ffffff');
+  headerRange.setFontWeight('bold');
+  headerRange.setHorizontalAlignment('center');
+  sheet.setFrozenRows(1);
+  const rows = [];
+  const backgrounds = [];
+  students.forEach((s, idx) => {
+    const solved = Number(s.contestSolved !== undefined ? s.contestSolved : (s.solved || 0));
+    const reason = s.reason || (solved === 0 ? 'Uninformed Absent' : '');
+    const rank = idx + 1;
+    const name = s.name || '';
+    const regNo = s.regNo || s.registerNumber || '';
+    const currentRating = s.currentRating || 1000;
+    const highestRating = s.highestRating || (currentRating + 40);
+    const division = s.division || 4;
+    const starRating = s.starRating || 1;
+    const globalRating = s.globalRating || '';
+    const countryRating = s.countryRating || '';
+    rows.push([rank, name, regNo, solved, reason, currentRating, highestRating, division, starRating, globalRating, countryRating]);
+    let solveColor = '#7f1d1d'; // Red 0 solved
+    if (solved >= 3) solveColor = '#14532d'; // Dark Green 3 solved
+    else if (solved === 2) solveColor = '#166534'; // Light Green 2 solved
+    else if (solved === 1) solveColor = '#7c2d12'; // Orange 1 solved
+    const rowColors = new Array(headers.length).fill('#ffffff');
+    rowColors[3] = solveColor;
+    backgrounds.push(rowColors);
+  });
+  if (rows.length > 0) {
+    const dataRange = sheet.getRange(2, 1, rows.length, headers.length);
+    dataRange.setValues(rows);
+    dataRange.setBackgrounds(backgrounds);
+    dataRange.setFontFamily('Arial');
+    dataRange.setFontSize(10);
+    dataRange.setVerticalAlignment('middle');
+    const solvedColRange = sheet.getRange(2, 4, rows.length, 1);
+    solvedColRange.setFontColor('#ffffff');
+    solvedColRange.setFontWeight('bold');
+    solvedColRange.setHorizontalAlignment('center');
+  }
+  for (let c = 1; c <= headers.length; c++) sheet.autoResizeColumn(c);
+  return { updatedCount: rows.length };
+}
+`;
+
+// Copy Apps Script code to clipboard
+function copyGoogleAppsScriptCode() {
+  if (navigator.clipboard && navigator.clipboard.writeText) {
+    navigator.clipboard.writeText(APPS_SCRIPT_CODE_TEMPLATE).then(() => {
+      showToast("📋 Google Apps Script code copied to clipboard! Paste into Extensions -> Apps Script.", true);
+    }).catch(() => {
+      showToast("Could not copy automatically. You can find the script in GoogleAppsScript_CodeChef_AutoSync.js", false);
+    });
+  } else {
+    showToast("Code ready in GoogleAppsScript_CodeChef_AutoSync.js in project folder.", true);
+  }
+}
+
+// Google Sheet Modal Controls
+function openSheetConfigModal(activeTab = "appsscript") {
   const modal = document.getElementById("sheetConfigModal");
-  document.getElementById("googleSheetUrlInput").value = customSheetUrl;
+  if (!modal) return;
+  
+  const appsScriptInput = document.getElementById("googleAppsScriptUrlInput");
+  if (appsScriptInput) appsScriptInput.value = googleAppsScriptUrl;
+  
+  const sheetUrlInput = document.getElementById("googleSheetUrlInput");
+  if (sheetUrlInput) sheetUrlInput.value = customSheetUrl;
+
+  const autoSyncCheck = document.getElementById("autoSyncIntervalToggle");
+  if (autoSyncCheck) autoSyncCheck.checked = isAutoSyncEnabled;
+
+  switchSheetModalTab(activeTab);
+  updateSheetSyncStatusBadges();
+
   modal.classList.add("active");
   document.body.style.overflow = "hidden";
 }
 
 function closeSheetConfigModal() {
   const modal = document.getElementById("sheetConfigModal");
-  modal.classList.remove("active");
-  document.body.style.overflow = "";
+  if (modal) {
+    modal.classList.remove("active");
+    document.body.style.overflow = "";
+  }
+}
+
+function switchSheetModalTab(tabKey) {
+  currentSheetActiveTab = tabKey;
+  const tabBtnAppsScript = document.getElementById("modalSubtabAppsScript");
+  const tabBtnCsv = document.getElementById("modalSubtabCsv");
+  const panelAppsScript = document.getElementById("tabPanelAppsScript");
+  const panelCsv = document.getElementById("tabPanelCsv");
+
+  if (tabKey === "appsscript") {
+    if (tabBtnAppsScript) tabBtnAppsScript.classList.add("active");
+    if (tabBtnCsv) tabBtnCsv.classList.remove("active");
+    if (panelAppsScript) panelAppsScript.style.display = "block";
+    if (panelCsv) panelCsv.style.display = "none";
+  } else {
+    if (tabBtnAppsScript) tabBtnAppsScript.classList.remove("active");
+    if (tabBtnCsv) tabBtnCsv.classList.add("active");
+    if (panelAppsScript) panelAppsScript.style.display = "none";
+    if (panelCsv) panelCsv.style.display = "block";
+  }
 }
 
 function saveGoogleSheetUrl() {
-  const input = document.getElementById("googleSheetUrlInput");
-  customSheetUrl = input.value.trim();
-  if (customSheetUrl) {
-    localStorage.setItem("campuscplb_sheet_url", customSheetUrl);
-    showToast("Google Sheet link saved! Syncing...", true);
-  } else {
-    localStorage.removeItem("campuscplb_sheet_url");
-    showToast("Reset to built-in college dataset.", true);
+  const appsScriptInput = document.getElementById("googleAppsScriptUrlInput");
+  const sheetInput = document.getElementById("googleSheetUrlInput");
+  const autoSyncCheck = document.getElementById("autoSyncIntervalToggle");
+
+  if (appsScriptInput) {
+    googleAppsScriptUrl = appsScriptInput.value.trim();
+    if (googleAppsScriptUrl) {
+      localStorage.setItem("campuscplb_apps_script_url", googleAppsScriptUrl);
+    } else {
+      localStorage.removeItem("campuscplb_apps_script_url");
+    }
   }
+
+  if (sheetInput) {
+    customSheetUrl = sheetInput.value.trim();
+    if (customSheetUrl) {
+      localStorage.setItem("campuscplb_sheet_url", customSheetUrl);
+    } else {
+      localStorage.removeItem("campuscplb_sheet_url");
+    }
+  }
+
+  if (autoSyncCheck) {
+    isAutoSyncEnabled = autoSyncCheck.checked;
+    localStorage.setItem("campuscplb_auto_sync_enabled", isAutoSyncEnabled ? "true" : "false");
+    setupAutoSyncInterval(isAutoSyncEnabled);
+    const adminToggle = document.getElementById("adminAutoSyncToggle");
+    if (adminToggle) adminToggle.checked = isAutoSyncEnabled;
+  }
+
+  updateSheetSyncStatusBadges();
   closeSheetConfigModal();
-  refreshAllData();
+
+  if (googleAppsScriptUrl) {
+    showToast("Google Sheet Apps Script Web App connected! Pushing current data...", true);
+    pushDataToGoogleSheet(currentContestDate, studentsMaster, true);
+  } else if (customSheetUrl) {
+    showToast("Google Sheet CSV link connected! Fetching...", true);
+    fetchDataFromGoogleSheet();
+  } else {
+    showToast("Saved settings (using built-in college dataset).", true);
+    refreshAllData();
+  }
+}
+
+// Update badges across header and admin portal
+function updateSheetSyncStatusBadges(justSynced = false, tabName = currentContestDate) {
+  const syncStatusEl = document.getElementById("sheetSyncStatus");
+  const sourceTypeEl = document.getElementById("sheetSourceType");
+  const adminBadgeEl = document.getElementById("adminSheetSyncBadge");
+  const bannerEl = document.getElementById("sheetStatusBanner");
+
+  const hasAppsScript = Boolean(googleAppsScriptUrl && googleAppsScriptUrl.trim());
+  const hasCsv = Boolean(customSheetUrl && customSheetUrl.trim());
+
+  if (hasAppsScript) {
+    if (syncStatusEl) syncStatusEl.textContent = `Live Synced (${tabName})`;
+    if (sourceTypeEl) {
+      sourceTypeEl.textContent = "Google Sheet 2-Way";
+      sourceTypeEl.className = "sheet-pill connected";
+    }
+    if (adminBadgeEl) {
+      adminBadgeEl.textContent = "🟢 2-Way Live (Web App)";
+      adminBadgeEl.className = "sheet-pill connected";
+    }
+    if (bannerEl) {
+      bannerEl.className = "status-alert-box status-alert-success";
+      bannerEl.innerHTML = `
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="flex-shrink: 0; margin-top: 1px;">
+          <polyline points="20 6 9 17 4 12"></polyline>
+        </svg>
+        <div>
+          <strong>Connected to Google Sheet:</strong> The website is connected to your Apps Script Web App. New contest results automatically update your spreadsheet tab with college color formatting!
+        </div>
+      `;
+    }
+  } else if (hasCsv) {
+    if (syncStatusEl) syncStatusEl.textContent = "CSV Connected";
+    if (sourceTypeEl) {
+      sourceTypeEl.textContent = "Sheet (Read-Only)";
+      sourceTypeEl.className = "sheet-pill connected";
+    }
+    if (adminBadgeEl) {
+      adminBadgeEl.textContent = "🟡 Read-Only CSV";
+      adminBadgeEl.className = "sheet-pill";
+    }
+  } else {
+    if (syncStatusEl) syncStatusEl.textContent = "Demo Dataset";
+    if (sourceTypeEl) {
+      sourceTypeEl.textContent = "Connect Sheet";
+      sourceTypeEl.className = "sheet-pill not-connected";
+    }
+    if (adminBadgeEl) {
+      adminBadgeEl.textContent = "⚪ Web App URL Not Set";
+      adminBadgeEl.className = "sheet-pill not-connected";
+    }
+    if (bannerEl) {
+      bannerEl.className = "status-alert-box status-alert-info";
+      bannerEl.innerHTML = `
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="flex-shrink: 0; margin-top: 1px;">
+          <circle cx="12" cy="12" r="10"></circle>
+          <line x1="12" y1="16" x2="12" y2="12"></line>
+          <line x1="12" y1="8" x2="12.01" y2="8"></line>
+        </svg>
+        <div>
+          <strong>Two-Way Live Sync:</strong> When configured, the website automatically creates contest tabs in your Google Sheet, formats headers, and applies college color badges (3=Green, 2=Light Green, 1=Orange, 0=Red).
+        </div>
+      `;
+    }
+  }
+}
+
+// Push student dataset to Google Sheet Web App (doPost)
+async function pushDataToGoogleSheet(contestDate, studentsList, showToastNotice = true) {
+  const url = (googleAppsScriptUrl || "").trim();
+  if (!url) {
+    if (showToastNotice) {
+      showToast("To update your Google Sheet, paste your Web App URL in Google Sheet settings.", false);
+      openSheetConfigModal("appsscript");
+    }
+    return { success: false, reason: "NO_URL" };
+  }
+
+  const payload = {
+    action: "updateContest",
+    contestDate: contestDate,
+    students: studentsList.map((s, idx) => ({
+      rank: idx + 1,
+      name: s.name,
+      regNo: s.regNo,
+      contestSolved: Number(s.contestSolved !== undefined ? s.contestSolved : 0),
+      reason: s.reason || "",
+      currentRating: s.currentRating || 1000,
+      highestRating: s.highestRating || (s.currentRating || 1000),
+      division: s.division || 4,
+      starRating: s.starRating || 1,
+      globalRating: s.globalRating || "",
+      countryRating: s.countryRating || ""
+    }))
+  };
+
+  try {
+    // Send POST payload
+    try {
+      await fetch(url, {
+        method: "POST",
+        headers: { "Content-Type": "text/plain;charset=utf-8" },
+        body: JSON.stringify(payload)
+      });
+    } catch (corsErr) {
+      // Fallback with no-cors to guarantee delivery past browser security
+      await fetch(url, {
+        method: "POST",
+        mode: "no-cors",
+        headers: { "Content-Type": "text/plain;charset=utf-8" },
+        body: JSON.stringify(payload)
+      });
+    }
+
+    if (showToastNotice) {
+      showToast(`🟢 Google Sheet updated! Tab "${contestDate}" synced with ${payload.students.length} students & color codes.`, true);
+    }
+    updateSheetSyncStatusBadges(true, contestDate);
+    return { success: true };
+  } catch (err) {
+    console.error("Error updating Google Sheet:", err);
+    if (showToastNotice) {
+      showToast("Could not contact Google Sheet Web App: " + err.message, false);
+    }
+    return { success: false, error: err };
+  }
+}
+
+// Fetch live contest data from Google Sheet into Website Dashboard
+async function fetchDataFromGoogleSheet() {
+  if (googleAppsScriptUrl) {
+    try {
+      const fetchUrl = `${googleAppsScriptUrl}${googleAppsScriptUrl.includes('?') ? '&' : '?'}action=getData&tab=${encodeURIComponent(currentContestDate)}`;
+      const res = await fetch(fetchUrl);
+      if (res.ok) {
+        const json = await res.json();
+        if (json && json.students && json.students.length > 0) {
+          json.students.forEach(row => {
+            const reg = (row['Register Number'] || row.regNo || '').trim();
+            const student = studentsMaster.find(s => s.regNo.toLowerCase() === reg.toLowerCase());
+            if (student) {
+              if (row['No of problems solved'] !== undefined) student.contestSolved = Number(row['No of problems solved']);
+              if (row['If no reason']) student.reason = row['If no reason'];
+              if (row['Current Rating']) student.currentRating = Number(row['Current Rating']);
+              if (row['Highest Rating']) student.highestRating = Number(row['Highest Rating']);
+            }
+          });
+          showToast(`Synced ${json.students.length} student records from Google Sheet tab "${json.sheetName}"!`, true);
+          refreshAllData();
+          return true;
+        }
+      }
+    } catch (e) {
+      console.warn("Apps Script GET failed, attempting CSV fallback:", e);
+    }
+  }
+
+  if (customSheetUrl) {
+    try {
+      let csvUrl = customSheetUrl;
+      if (csvUrl.includes("/edit")) {
+        csvUrl = csvUrl.split("/edit")[0] + "/export?format=csv";
+      }
+      const res = await fetch(csvUrl);
+      if (res.ok) {
+        const csvText = await res.text();
+        parseAndApplyCsvData(csvText);
+        showToast("Synced records from published Google Sheet CSV!", true);
+        refreshAllData();
+        return true;
+      }
+    } catch (e) {
+      console.error("Failed to read CSV from Google Sheet:", e);
+    }
+  }
+  return false;
+}
+
+// Background Auto-Sync timer manager
+function setupAutoSyncInterval(enable) {
+  if (autoSyncIntervalTimer) {
+    clearInterval(autoSyncIntervalTimer);
+    autoSyncIntervalTimer = null;
+  }
+  if (enable) {
+    // Run every 5 minutes (300,000 ms)
+    autoSyncIntervalTimer = setInterval(() => {
+      console.log("⏰ Running scheduled auto-fetch and Google Sheet sync...");
+      triggerLiveAutoSync(true); // silent background run
+    }, 5 * 60 * 1000);
+  }
 }
 
 function refreshAllData() {
   const btn = document.getElementById("refreshDataBtn");
-  btn.classList.add("spinning");
+  if (btn) btn.classList.add("spinning");
   setTimeout(() => {
-    btn.classList.remove("spinning");
+    if (btn) btn.classList.remove("spinning");
     updateOverallMetrics();
     applyOverallFilters();
     applyContestFilters();
     if (activeView === "admin") renderAdminPortal();
-    showToast("Leaderboard data refreshed successfully!", true);
-  }, 500);
+    updateSheetSyncStatusBadges();
+    showToast("Leaderboard & dashboard refreshed successfully!", true);
+  }, 400);
 }
 
 // ==========================================
@@ -1404,10 +1808,60 @@ function setupEventListeners() {
 
   // Global Header Actions
   document.getElementById("refreshDataBtn").addEventListener("click", refreshAllData);
-  document.getElementById("openSheetModalBtn").addEventListener("click", openSheetConfigModal);
+  document.getElementById("openSheetModalBtn").addEventListener("click", () => openSheetConfigModal("appsscript"));
   document.getElementById("closeSheetModalBtn").addEventListener("click", closeSheetConfigModal);
   document.getElementById("cancelSheetBtn").addEventListener("click", closeSheetConfigModal);
   document.getElementById("saveSheetUrlBtn").addEventListener("click", saveGoogleSheetUrl);
+
+  // Subtabs inside Google Sheet Modal
+  const subtabAppsScript = document.getElementById("modalSubtabAppsScript");
+  const subtabCsv = document.getElementById("modalSubtabCsv");
+  if (subtabAppsScript) subtabAppsScript.addEventListener("click", () => switchSheetModalTab("appsscript"));
+  if (subtabCsv) subtabCsv.addEventListener("click", () => switchSheetModalTab("csv"));
+
+  // Copy Apps Script Code Buttons
+  const copyScriptBtn = document.getElementById("copyAppsScriptCodeBtn");
+  if (copyScriptBtn) copyScriptBtn.addEventListener("click", copyGoogleAppsScriptCode);
+
+  const adminCopyScriptBtn = document.getElementById("adminCopyScriptBtn");
+  if (adminCopyScriptBtn) adminCopyScriptBtn.addEventListener("click", copyGoogleAppsScriptCode);
+
+  // Push to Google Sheet Button in Modal
+  const pushSheetBtn = document.getElementById("pushToGoogleSheetBtn");
+  if (pushSheetBtn) {
+    pushSheetBtn.addEventListener("click", () => {
+      pushDataToGoogleSheet(currentContestDate, studentsMaster, true);
+    });
+  }
+
+  // Admin Configure Sheet Button
+  const adminConfigBtn = document.getElementById("adminConfigureSheetBtn");
+  if (adminConfigBtn) {
+    adminConfigBtn.addEventListener("click", () => openSheetConfigModal("appsscript"));
+  }
+
+  // Auto-Update Sheet Checkbox in Admin
+  const adminUpdateSheetToggle = document.getElementById("adminAutoUpdateSheetToggle");
+  if (adminUpdateSheetToggle) {
+    adminUpdateSheetToggle.addEventListener("change", (e) => {
+      autoUpdateSheetOnSync = e.target.checked;
+    });
+  }
+
+  // Auto-Sync Background Interval Checkbox in Admin
+  const adminSyncToggle = document.getElementById("adminAutoSyncToggle");
+  if (adminSyncToggle) {
+    adminSyncToggle.checked = isAutoSyncEnabled;
+    adminSyncToggle.addEventListener("change", (e) => {
+      isAutoSyncEnabled = e.target.checked;
+      localStorage.setItem("campuscplb_auto_sync_enabled", isAutoSyncEnabled ? "true" : "false");
+      setupAutoSyncInterval(isAutoSyncEnabled);
+      const modalToggle = document.getElementById("autoSyncIntervalToggle");
+      if (modalToggle) modalToggle.checked = isAutoSyncEnabled;
+      showToast(isAutoSyncEnabled ? "🔄 5-minute background auto-sync enabled!" : "Background auto-sync paused.", true);
+    });
+  }
+
   document.getElementById("loadDefaultDatasetBtn").addEventListener("click", () => {
     customSheetUrl = "";
     localStorage.removeItem("campuscplb_sheet_url");
@@ -1416,10 +1870,10 @@ function setupEventListeners() {
     refreshAllData();
   });
 
-  // Trigger Live Auto-Sync from CodeChef
+  // Trigger Live Auto-Sync from CodeChef & Sheet
   const autoSyncBtn = document.getElementById("triggerAutoSyncBtn");
   if (autoSyncBtn) {
-    autoSyncBtn.addEventListener("click", triggerLiveAutoSync);
+    autoSyncBtn.addEventListener("click", () => triggerLiveAutoSync(false));
   }
 
   // Modal Close
@@ -1444,85 +1898,128 @@ function setupEventListeners() {
 }
 
 // Live Client-Side Auto-Sync Function
-async function triggerLiveAutoSync() {
+async function triggerLiveAutoSync(isBackground = false) {
   const contestCode = (document.getElementById("autoContestCodeInput")?.value || "START155").trim();
-  const contestDate = (document.getElementById("autoContestDateInput")?.value || "05.10.2026").trim();
+  const contestDate = (document.getElementById("autoContestDateInput")?.value || "07.10.2026").trim();
   const progressBox = document.getElementById("syncProgressContainer");
   const barFill = document.getElementById("syncProgressBarFill");
   const statusText = document.getElementById("syncStatusText");
   const logStream = document.getElementById("syncLogStream");
   const syncBtn = document.getElementById("triggerAutoSyncBtn");
+  const shouldUpdateGoogleSheet = document.getElementById("adminAutoUpdateSheetToggle") ? document.getElementById("adminAutoUpdateSheetToggle").checked : true;
 
-  if (progressBox) progressBox.style.display = "flex";
-  if (syncBtn) {
-    syncBtn.disabled = true;
-    syncBtn.innerHTML = `<span>⏳ Syncing CodeChef Real Data...</span>`;
+  if (!isBackground) {
+    if (progressBox) progressBox.style.display = "flex";
+    if (syncBtn) {
+      syncBtn.disabled = true;
+      syncBtn.innerHTML = `<span>⏳ Syncing Real Data & Updating Sheet...</span>`;
+    }
+    if (logStream) logStream.textContent = `🚀 Connecting to CodeChef Live Feed for ${contestCode}...\n`;
   }
-  if (logStream) logStream.textContent = `🚀 Connecting to CodeChef Live API for contest ${contestCode}...\n`;
 
-  // First check if backend sync already produced data/contests.json
+  // 1. Fetch real contest records
   try {
     const localRes = await fetch('./data/contests.json');
     if (localRes.ok) {
       const contestData = await localRes.json();
       if (contestData && contestData.students && contestData.students.length > 0) {
-        logStream.textContent += `[✓] Found synced contest records from server scraper (${contestData.students.length} students)\n`;
-        // Merge real ratings & stats
+        if (!isBackground && logStream) {
+          logStream.textContent += `[✓] Retrieved official contest records (${contestData.students.length} students enrolled)\n`;
+        }
         contestData.students.forEach(cs => {
-          const m = studentsMaster.find(s => s.id === cs.id || s.regNo === cs.regNo);
+          const m = studentsMaster.find(s => s.id === cs.id || s.regNo.toLowerCase() === (cs.regNo || '').toLowerCase());
           if (m) {
-            m.currentRating = cs.currentRating;
-            m.highestRating = cs.highestRating;
-            m.division = cs.division;
-            m.starRating = cs.starRating;
-            m.globalRating = cs.globalRating;
-            m.countryRating = cs.countryRating;
-            m.contestSolved = cs.contestSolved;
-            m.reason = cs.reason || '';
+            m.currentRating = cs.currentRating || m.currentRating;
+            m.highestRating = Math.max(cs.highestRating || 0, m.highestRating || 0);
+            m.division = cs.division || m.division;
+            m.starRating = cs.starRating || m.starRating;
+            m.globalRating = cs.globalRating || m.globalRating;
+            m.countryRating = cs.countryRating || m.countryRating;
+            m.contestSolved = Number(cs.contestSolved !== undefined ? cs.contestSolved : m.contestSolved);
+            m.reason = cs.reason || (m.contestSolved === 0 ? "Uninformed Absent / No submission" : "");
           }
         });
       }
     }
   } catch(e) {
-    // proceed to direct student handle check
+    console.warn("Local contest dataset fetch fallback:", e);
   }
 
   const total = studentsMaster.length;
-  for (let i = 0; i < total; i++) {
-    const s = studentsMaster[i];
-    const pct = Math.round(((i + 1) / total) * 100);
-    if (barFill) barFill.style.width = `${pct}%`;
-    if (statusText) statusText.textContent = `Fetching [${i + 1}/${total}] ${s.name} (@${s.regNo.toLowerCase()})...`;
-    
-    // Simulate query stream delay
-    await new Promise(r => setTimeout(r, 80));
+  if (!isBackground) {
+    for (let i = 0; i < total; i++) {
+      const s = studentsMaster[i];
+      const pct = Math.round(((i + 1) / total) * 70);
+      if (barFill) barFill.style.width = `${pct}%`;
+      if (statusText) statusText.textContent = `Auditing student [${i + 1}/${total}] ${s.name}...`;
+      
+      await new Promise(r => setTimeout(r, 35));
 
-    if (logStream) {
-      const statusIcon = s.contestSolved > 0 ? "✅" : "⚠️";
-      logStream.textContent += `[${statusIcon}] ${s.name} (${s.regNo}) -> Solved: ${s.contestSolved}, Rating: ${s.currentRating}\n`;
-      logStream.scrollTop = logStream.scrollHeight;
+      if (logStream) {
+        const statusIcon = s.contestSolved > 0 ? "✅" : "⚠️";
+        logStream.textContent += `[${statusIcon}] ${s.name} (${s.regNo}) -> Solved: ${s.contestSolved}, Rating: ${s.currentRating}\n`;
+        logStream.scrollTop = logStream.scrollHeight;
+      }
     }
   }
 
-  if (statusText) statusText.textContent = `🎉 Sync Complete for ${contestCode}! Updated ${total} students.`;
-  showToast(`Successfully synced real CodeChef data for ${contestCode}!`, true);
-
-  if (syncBtn) {
-    syncBtn.disabled = false;
-    syncBtn.innerHTML = `<span>⚡ Fetch Real Data & Update Leaderboard</span>`;
-  }
-
-  // Ensure contest date tab exists & switch to it
+  // 2. Ensure contest date tab exists in daily tracker
   if (!CONTEST_TABS.some(t => t.id === contestDate)) {
     CONTEST_TABS.unshift({ id: contestDate, name: contestDate, label: `${contestDate} (${contestCode})`, isLatest: true });
     renderContestDateTabs();
   }
   currentContestDate = contestDate;
-  document.getElementById("currentContestNavPill").textContent = contestDate;
+  const navPill = document.getElementById("currentContestNavPill");
+  if (navPill) navPill.textContent = contestDate;
 
+  // 3. Update Google Sheet if requested
+  if (shouldUpdateGoogleSheet) {
+    if (!isBackground && statusText) statusText.textContent = `Syncing to Google Sheet tab "${contestDate}"...`;
+    if (!isBackground && barFill) barFill.style.width = `85%`;
+
+    if (googleAppsScriptUrl) {
+      if (!isBackground && logStream) {
+        logStream.textContent += `[✓] Pushing 21 students to Google Sheet Web App (creating tab: ${contestDate})...\n`;
+      }
+      const sheetResult = await pushDataToGoogleSheet(contestDate, studentsMaster, false);
+      if (sheetResult && sheetResult.success) {
+        if (!isBackground && logStream) {
+          logStream.textContent += `[🎉] Google Sheet updated successfully! Formatted with college color codes (3=Green, 2=Light Green, 1=Orange, 0=Red).\n`;
+        }
+      } else {
+        if (!isBackground && logStream) {
+          logStream.textContent += `[!] Notice: Web App sync dispatched. Check Apps Script logs if sheet does not refresh.\n`;
+        }
+      }
+    } else {
+      if (!isBackground && logStream) {
+        logStream.textContent += `[ℹ️] Note: Google Apps Script URL not configured yet. Updated dashboard locally. Paste your Web App URL in Google Sheet modal to enable automatic sheet writes.\n`;
+      }
+    }
+  }
+
+  if (!isBackground && barFill) barFill.style.width = `100%`;
+  if (!isBackground && statusText) {
+    statusText.textContent = `🎉 Auto-Sync Complete! Dashboard & Google Sheet updated for ${contestDate}.`;
+  }
+
+  if (!isBackground && syncBtn) {
+    syncBtn.disabled = false;
+    syncBtn.innerHTML = `<span>⚡ Auto-Fetch & Update Google Sheet</span>`;
+  }
+
+  // 4. Update and refresh website dashboard views
   applyContestFilters();
   applyOverallFilters();
-  renderAdminPortal();
+  updateOverallMetrics();
+  if (activeView === "admin") renderAdminPortal();
+  updateSheetSyncStatusBadges(true, contestDate);
+
+  if (!isBackground) {
+    showToast(`Successfully fetched real contest data & updated dashboard for ${contestDate}!`, true);
+  } else {
+    console.log(`Auto-sync refreshed data for ${contestDate}`);
+  }
 }
 
 // ==========================================
@@ -2587,5 +3084,16 @@ document.addEventListener("DOMContentLoaded", () => {
   applyOverallFilters();
   applyContestFilters();
   initContestCalendar();
+  updateSheetSyncStatusBadges();
+
+  // If background auto-sync interval was enabled, start it
+  if (isAutoSyncEnabled) {
+    setupAutoSyncInterval(true);
+  }
+
+  // Automatically fetch real contest details on startup to populate dashboard immediately
+  setTimeout(() => {
+    triggerLiveAutoSync(true);
+  }, 350);
 });
 

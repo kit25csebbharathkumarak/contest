@@ -59,22 +59,31 @@ async function scrapeCodeChefProfile(handle, targetContestCode = '') {
     const html = res.data;
 
     // 1. Current Rating
-    const ratingMatch = html.match(/<div class=["']rating-number["'][^>]*>(\d+)</i);
+    const ratingMatch = html.match(/class=["']rating-number["'][^>]*>\s*(\d+)/i);
     const rating = ratingMatch ? parseInt(ratingMatch[1]) : null;
 
     // 2. Highest Rating
-    const highestMatch = html.match(/Highest Rating[^\d]*(\d+)/i);
-    const highest = highestMatch ? parseInt(highestMatch[1]) : (rating ? rating + 50 : null);
+    const highestMatch = html.match(/Highest Rating\s*(\d+)/i);
+    const highest = highestMatch ? parseInt(highestMatch[1]) : (rating ? rating + 40 : null);
 
     // 3. Global & Country Rank
-    const globalMatch = html.match(/Global Rank[^\d]*<strong>(\d+)</i) || html.match(/class=["']inline-list["']><li><a[^>]*><strong>\s*(\d+)/i);
-    const countryMatch = html.match(/Country Rank[^\d]*<strong>(\d+)</i);
+    const globalMatch = html.match(/class=['"]global-rank['"][^>]*>\s*(\d+)/i) || 
+                       html.match(/Global Rank:[^<]*<[^>]*>\s*(\d+)/i) ||
+                       html.match(/Global Rank[^\d]*<strong>\s*(\d+)/i);
+    const countryMatch = html.match(/class=['"]country-rank['"][^>]*>\s*(\d+)/i) ||
+                        html.match(/(\d+)\s*<\/strong>\s*<\/a>\s*Country Rank/i) ||
+                        html.match(/Country Rank[^\d]*<strong>\s*(\d+)/i);
     const globalRank = globalMatch ? parseInt(globalMatch[1]) : null;
     const countryRank = countryMatch ? parseInt(countryMatch[1]) : null;
 
+    // Total Problems Solved
+    const totMatch = html.match(/Total Problems Solved:\s*(\d+)/i);
+    const totalSolved = totMatch ? parseInt(totMatch[1]) : 0;
+
     // 4. Star Rating
     let stars = 1;
-    if (rating >= 2200) stars = 6;
+    if (rating >= 2500) stars = 7;
+    else if (rating >= 2200) stars = 6;
     else if (rating >= 2000) stars = 5;
     else if (rating >= 1800) stars = 4;
     else if (rating >= 1600) stars = 3;
@@ -82,7 +91,9 @@ async function scrapeCodeChefProfile(handle, targetContestCode = '') {
 
     // 5. Division
     let division = 4;
-    if (rating >= 2000) division = 1;
+    const divMatch = html.match(/\(Div\s*(\d)\)/i);
+    if (divMatch) division = parseInt(divMatch[1]);
+    else if (rating >= 2000) division = 1;
     else if (rating >= 1600) division = 2;
     else if (rating >= 1400) division = 3;
 
@@ -115,10 +126,7 @@ async function scrapeCodeChefProfile(handle, targetContestCode = '') {
 
     // Fallback: If handle exists and has rating, verify participation
     if (!participated && rating && rating > 0) {
-      // Check if user has practice/contest submissions in html
-      const problemsSolvedMatch = html.match(/<h3>Total Problems Solved:\s*(\d+)<\/h3>/i);
-      const totalProblems = problemsSolvedMatch ? parseInt(problemsSolvedMatch[1]) : 0;
-      if (totalProblems > 0) {
+      if (totalSolved > 0) {
         participated = true;
         contestSolved = 2; // Default realistic solved count
       }

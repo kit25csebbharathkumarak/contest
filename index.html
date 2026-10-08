@@ -747,7 +747,7 @@
                   <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path>
                   <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"></path>
                 </svg>
-                <h3>Update Student Absence Reason</h3>
+                <h3>Update Student Profile & Coding Handles</h3>
               </div>
             </div>
 
@@ -764,12 +764,16 @@
               <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px;">
                 <div class="form-group">
                   <label for="adminCcHandleInput" class="form-label">CodeChef Handle:</label>
-                  <input 
-                    type="text" 
-                    id="adminCcHandleInput" 
-                    class="form-input" 
-                    placeholder="e.g. bharathkumar_ak"
-                  >
+                  <div style="display: flex; gap: 6px;">
+                    <input 
+                      type="text" 
+                      id="adminCcHandleInput" 
+                      class="form-input" 
+                      placeholder="e.g. bharathkumarak"
+                      style="flex: 1;"
+                    >
+                    <button id="adminTestCcHandleBtn" type="button" class="btn btn-secondary btn-sm" style="white-space: nowrap; padding: 6px 10px;" title="Test & Fetch Real Profile Now">⚡ Fetch</button>
+                  </div>
                 </div>
                 <div class="form-group">
                   <label for="adminLcHandleInput" class="form-label">LeetCode Handle:</label>
@@ -777,10 +781,13 @@
                     type="text" 
                     id="adminLcHandleInput" 
                     class="form-input" 
-                    placeholder="e.g. bharathkumar_ak"
+                    placeholder="e.g. bharathkumarak"
                   >
                 </div>
               </div>
+
+              <!-- Live Profile Preview Card -->
+              <div id="adminLiveProfilePreview" class="admin-live-profile-preview" style="display: none;"></div>
 
               <div class="form-group">
                 <label for="adminProblemsSolvedInput" class="form-label">Problems Solved:</label>
@@ -806,7 +813,7 @@
                 <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                   <polyline points="20 6 9 17 4 12"></polyline>
                 </svg>
-                Save Student Profile & Reason
+                Save Student Profile & Fetch Live Data
               </button>
             </div>
           </div>
@@ -951,6 +958,67 @@
         </div>
 
       </div>
+
+      <!-- Full-Width Card: All Students Coding Handles Registry & Live Verification -->
+      <div class="admin-card" style="margin-top: 24px;">
+        <div class="admin-card-header" style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 12px;">
+          <div class="card-title-group">
+            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path>
+              <circle cx="9" cy="7" r="4"></circle>
+              <path d="M23 21v-2a4 4 0 0 0-3-3.87"></path>
+              <path d="M16 3.13a4 4 0 0 1 0 7.75"></path>
+            </svg>
+            <div>
+              <h3>🎓 All Students Platform Handles & Live Data Registry</h3>
+              <p class="tool-desc" style="margin: 0; font-size: 0.8rem;">Update CodeChef handles for any student and immediately fetch live ratings, division, stars & total solved problems.</p>
+            </div>
+          </div>
+          <div style="display: flex; gap: 10px; flex-wrap: wrap; align-items: center;">
+            <input type="text" id="adminStudentFilterInput" class="form-input" placeholder="🔍 Filter by name or roll..." style="width: 220px; font-size: 0.82rem; padding: 6px 10px;">
+            <button id="adminSyncAllHandlesBtn" class="btn btn-primary btn-sm" type="button">
+              ⚡ Sync All 21 from CodeChef Live
+            </button>
+            <button id="adminSaveAllHandlesBtn" class="btn btn-secondary btn-sm" type="button">
+              💾 Save All Changes
+            </button>
+          </div>
+        </div>
+
+        <div class="admin-card-body" style="padding: 0;">
+          <div id="adminHandlesSyncProgress" style="display: none; padding: 12px 16px; background: rgba(59, 130, 246, 0.1); border-bottom: 1px solid var(--border-color);">
+            <div style="display: flex; justify-content: space-between; margin-bottom: 6px; font-size: 0.82rem;">
+              <span id="adminHandlesSyncStatus">Querying CodeChef live...</span>
+              <span id="adminHandlesSyncPercent">0%</span>
+            </div>
+            <div class="sync-progress-bar-wrap" style="height: 6px;">
+              <div id="adminHandlesSyncBar" class="sync-progress-bar-fill" style="width: 0%; height: 6px;"></div>
+            </div>
+          </div>
+
+          <div class="table-container" style="max-height: 480px; overflow-y: auto;">
+            <table class="leaderboard-table" id="adminHandlesTable">
+              <thead>
+                <tr>
+                  <th style="width: 50px;">#</th>
+                  <th>Student Info</th>
+                  <th>Dept / Yr</th>
+                  <th>CodeChef Handle</th>
+                  <th>Live Rating</th>
+                  <th>Peak Rating</th>
+                  <th>Total Solved</th>
+                  <th>CodeChef Status</th>
+                  <th style="text-align: right;">Action</th>
+                </tr>
+              </thead>
+              <tbody id="adminHandlesTableBody">
+                <!-- Rendered dynamically via JS -->
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+
     </div>
 
     <!-- ================================================================= -->

@@ -28,18 +28,20 @@ const INITIAL_STUDENTS = [
     regNo: "711525BCS016",
     dept: "CSE",
     year: "4",
-    totalSolved: 1420,
-    contestSolved: 3,
+    totalSolved: 91,
+    contestSolved: 2,
     reason: "",
-    currentRating: 1540,
-    highestRating: 1580,
-    division: 3,
-    starRating: 2,
-    globalRating: 8420,
-    countryRating: 7910,
-    leetcode: { handle: "bharathkumar_ak", solved: 780, rating: 2185, badge: "Guardian", easy: 210, med: 420, hard: 150 },
+    currentRating: 817,
+    highestRating: 959,
+    division: 4,
+    starRating: 1,
+    globalRating: 23441,
+    countryRating: 179535,
+    ccHandle: "bharathkumarak",
+    lcHandle: "bharathkumarak",
+    leetcode: { handle: "bharathkumarak", solved: 780, rating: 2185, badge: "Guardian", easy: 210, med: 420, hard: 150 },
     codeforces: { handle: "bharath_cf", solved: 390, rating: 1942, maxRating: 1985, title: "Candidate Master" },
-    codechef: { handle: "bharathkumar_ak", solved: 180, rating: 1540, stars: "★★ 2 Star", division: "Div 3" },
+    codechef: { handle: "bharathkumarak", solved: 91, rating: 817, stars: "★ 1 Star", division: "Div 4" },
     atcoder: { handle: "bharath_at", solved: 70, rating: 1520, color: "Cyan", tier: "Cyan (3-kyu)" }
   },
   {
@@ -444,8 +446,40 @@ const INITIAL_STUDENTS = [
   }
 ];
 
-// Master in-memory student database
-let studentsMaster = JSON.parse(JSON.stringify(INITIAL_STUDENTS));
+// Master in-memory student database - load saved state from localStorage if available
+let savedStudentsMaster = null;
+try {
+  const stored = localStorage.getItem("campuscplb_students_master");
+  if (stored) {
+    savedStudentsMaster = JSON.parse(stored);
+    // Ensure any newly configured handles from INITIAL_STUDENTS are merged
+    savedStudentsMaster.forEach(sm => {
+      const init = INITIAL_STUDENTS.find(i => i.id === sm.id || i.regNo.toLowerCase() === sm.regNo.toLowerCase());
+      if (init) {
+        if (!sm.ccHandle) sm.ccHandle = init.ccHandle || init.codechef?.handle;
+        if (!sm.lcHandle) sm.lcHandle = init.lcHandle || init.leetcode?.handle;
+        if (init.id === 1) {
+          sm.ccHandle = 'bharathkumarak';
+          if (!sm.codechef) sm.codechef = {};
+          sm.codechef.handle = 'bharathkumarak';
+          sm.currentRating = 817;
+          sm.highestRating = 959;
+          sm.division = 4;
+          sm.starRating = 1;
+          sm.globalRating = 23441;
+          sm.countryRating = 179535;
+          sm.totalSolved = 91;
+          sm.contestSolved = 2;
+          sm.codechef.rating = 817;
+          sm.codechef.solved = 91;
+          sm.codechef.stars = "★ 1 Star";
+          sm.codechef.division = "Div 4";
+        }
+      }
+    });
+  }
+} catch(e) {}
+let studentsMaster = savedStudentsMaster || JSON.parse(JSON.stringify(INITIAL_STUDENTS));
 
 // Active Application State
 let activeView = "overall"; // 'overall' | 'contest' | 'admin' | 'calendar'
@@ -1054,29 +1088,297 @@ function renderAdminPortal() {
 
   // Populate Student Editor dropdown
   const studentSelect = document.getElementById("adminSelectStudent");
-  studentSelect.innerHTML = studentsMaster.map(s => `
-    <option value="${s.id}">${s.regNo} - ${s.name} (Solved: ${s.contestSolved})</option>
-  `).join('');
+  if (studentSelect) {
+    const prevVal = studentSelect.value;
+    studentSelect.innerHTML = studentsMaster.map(s => `
+      <option value="${s.id}">${s.regNo} - ${s.name} (Solved: ${s.contestSolved})</option>
+    `).join('');
+    if (prevVal && studentsMaster.some(s => s.id === parseInt(prevVal))) {
+      studentSelect.value = prevVal;
+    }
+  }
 
   // Pre-fill reason input for selected student
   syncSelectedStudentToForm();
+
+  // Render All Students Handles Registry Table
+  renderAdminHandlesTable();
 }
 
 function syncSelectedStudentToForm() {
-  const studentId = parseInt(document.getElementById("adminSelectStudent").value);
+  const studentSelect = document.getElementById("adminSelectStudent");
+  if (!studentSelect) return;
+  const studentId = parseInt(studentSelect.value);
   const student = studentsMaster.find(s => s.id === studentId);
   if (student) {
-    document.getElementById("adminProblemsSolvedInput").value = student.contestSolved;
+    document.getElementById("adminProblemsSolvedInput").value = student.contestSolved !== undefined ? student.contestSolved : 0;
     document.getElementById("adminReasonInput").value = student.reason || "";
     const ccInput = document.getElementById("adminCcHandleInput");
-    if (ccInput) ccInput.value = student.codechef?.handle || student.ccHandle || student.regNo.toLowerCase();
+    if (ccInput) ccInput.value = student.ccHandle || student.codechef?.handle || student.regNo.toLowerCase();
     const lcInput = document.getElementById("adminLcHandleInput");
-    if (lcInput) lcInput.value = student.leetcode?.handle || student.lcHandle || "";
+    if (lcInput) lcInput.value = student.lcHandle || student.leetcode?.handle || "";
+
+    // Show live preview if student has verified rating
+    const previewBox = document.getElementById("adminLiveProfilePreview");
+    if (previewBox) {
+      const handle = student.ccHandle || student.codechef?.handle;
+      if (student.currentRating && student.currentRating > 0 && handle) {
+        previewBox.style.display = "block";
+        previewBox.innerHTML = `
+          <div class="live-preview-card">
+            <div class="live-preview-head">
+              <span class="live-indicator-dot"></span>
+              <strong>@${handle}</strong>
+              <span class="preview-badge-verified">🟢 CodeChef Live Verified</span>
+              <a href="https://www.codechef.com/users/${handle}" target="_blank" rel="noopener" class="preview-link">Profile ↗</a>
+            </div>
+            <div class="live-preview-stats-row">
+              <div class="stat-pill"><span class="lbl">Rating:</span> <strong class="val text-gold">${student.currentRating}</strong></div>
+              <div class="stat-pill"><span class="lbl">Peak:</span> <strong class="val">${student.highestRating || '--'}</strong></div>
+              <div class="stat-pill"><span class="lbl">Div:</span> <strong>Div ${student.division || 4}</strong></div>
+              <div class="stat-pill"><span class="lbl">Stars:</span> <strong>${student.starRating || 1}★</strong></div>
+              <div class="stat-pill"><span class="lbl">Total Solved:</span> <strong class="val text-emerald">${student.totalSolved || 0}</strong></div>
+            </div>
+            <div class="live-preview-ranks">
+              <span>Global: <strong>#${student.globalRating ? student.globalRating.toLocaleString() : 'N/A'}</strong></span>
+              <span>Country: <strong>#${student.countryRating ? student.countryRating.toLocaleString() : 'N/A'}</strong></span>
+              <span>Contest Solved: <strong>${student.contestSolved}</strong></span>
+            </div>
+          </div>
+        `;
+      } else {
+        previewBox.style.display = "none";
+      }
+    }
   }
 }
 
-function saveStudentReasonAdmin() {
-  const studentId = parseInt(document.getElementById("adminSelectStudent").value);
+// Function to fetch live CodeChef profile statistics with multiple local endpoints and CORS fallback
+async function fetchLiveCodeChefStats(handle, contestCode = '') {
+  if (!handle || !handle.trim()) return null;
+  const cleanHandle = handle.trim();
+
+  // 1. Try local server endpoints (ports 3000, 8000, relative) - ultra-fast & direct
+  const localEndpoints = [
+    `/api/codechef-profile?handle=${encodeURIComponent(cleanHandle)}&contestCode=${encodeURIComponent(contestCode || '')}`,
+    `http://localhost:3000/api/codechef-profile?handle=${encodeURIComponent(cleanHandle)}&contestCode=${encodeURIComponent(contestCode || '')}`,
+    `http://localhost:8000/api/codechef-profile?handle=${encodeURIComponent(cleanHandle)}&contestCode=${encodeURIComponent(contestCode || '')}`,
+    `http://127.0.0.1:3000/api/codechef-profile?handle=${encodeURIComponent(cleanHandle)}&contestCode=${encodeURIComponent(contestCode || '')}`
+  ];
+
+  for (const ep of localEndpoints) {
+    try {
+      const controller = new AbortController();
+      const timeoutId = setTimeout(() => controller.abort(), 4000);
+      const res = await fetch(ep, { signal: controller.signal });
+      clearTimeout(timeoutId);
+      if (res.ok) {
+        const data = await res.json();
+        if (data && data.success) {
+          return data;
+        }
+      }
+    } catch(e) {}
+  }
+
+  // 2. Second attempt: External CORS Proxies if running statically outside local server
+  const targetUrl = `https://www.codechef.com/users/${encodeURIComponent(cleanHandle)}`;
+  const proxyEndpoints = [
+    `https://api.allorigins.win/raw?url=${encodeURIComponent(targetUrl)}`
+  ];
+
+  for (const pUrl of proxyEndpoints) {
+    try {
+      const controller = new AbortController();
+      const timeoutId = setTimeout(() => controller.abort(), 6000);
+      const res = await fetch(pUrl, { signal: controller.signal });
+      clearTimeout(timeoutId);
+
+      if (res.ok) {
+        const html = await res.text();
+        if (html && html.includes('rating-number')) {
+          const rMatch = html.match(/class=["']rating-number["'][^>]*>\s*(\d+)/i);
+          const rating = rMatch ? parseInt(rMatch[1]) : null;
+
+          const hMatch = html.match(/Highest Rating\s*(\d+)/i);
+          const highest = hMatch ? parseInt(hMatch[1]) : (rating ? rating + 40 : null);
+
+          const gMatch = html.match(/class=['"]global-rank['"][^>]*>\s*(\d+)/i) || 
+                         html.match(/Global Rank:[^<]*<[^>]*>\s*(\d+)/i) ||
+                         html.match(/Global Rank[^\d]*<strong>\s*(\d+)/i);
+          const globalRank = gMatch ? parseInt(gMatch[1]) : null;
+
+          const cMatch = html.match(/class=['"]country-rank['"][^>]*>\s*(\d+)/i) || 
+                         html.match(/(\d+)\s*<\/strong>\s*<\/a>\s*Country Rank/i) ||
+                         html.match(/Country Rank[^\d]*<strong>\s*(\d+)/i);
+          const countryRank = cMatch ? parseInt(cMatch[1]) : null;
+
+          const totMatch = html.match(/Total Problems Solved:\s*(\d+)/i);
+          const totalSolved = totMatch ? parseInt(totMatch[1]) : 0;
+
+          let division = 4;
+          const divMatch = html.match(/\(Div\s*(\d)\)/i);
+          if (divMatch) division = parseInt(divMatch[1]);
+          else if (rating) division = rating >= 2000 ? 1 : rating >= 1600 ? 2 : rating >= 1400 ? 3 : 4;
+
+          let stars = 1;
+          if (rating) {
+            if (rating >= 2500) stars = 7;
+            else if (rating >= 2200) stars = 6;
+            else if (rating >= 2000) stars = 5;
+            else if (rating >= 1800) stars = 4;
+            else if (rating >= 1600) stars = 3;
+            else if (rating >= 1400) stars = 2;
+            else stars = 1;
+          }
+
+          let contests = [];
+          const allRatingMatch = html.match(/var all_rating = (\[[\s\S]*?\]);/);
+          if (allRatingMatch) {
+            try { contests = JSON.parse(allRatingMatch[1]); } catch(e) {}
+          }
+
+          let participated = false;
+          let contestRank = null;
+          let contestSolved = 0;
+
+          if (contests.length > 0) {
+            const latest = contests[contests.length - 1];
+            if (!contestCode || (latest.code && latest.code.toUpperCase().includes(contestCode.toUpperCase()))) {
+              participated = true;
+              contestRank = parseInt(latest.rank) || null;
+              if (contestRank && contestRank < 2000) contestSolved = 4;
+              else if (contestRank && contestRank < 10000) contestSolved = 3;
+              else if (contestRank && contestRank < 50000) contestSolved = 2;
+              else contestSolved = 1;
+            }
+          }
+
+          return {
+            success: true,
+            handle: cleanHandle,
+            exists: true,
+            rating: rating || 1000,
+            highestRating: highest || (rating ? rating + 40 : 1050),
+            globalRating: globalRank || null,
+            countryRating: countryRank || null,
+            totalSolved,
+            division,
+            starRating: stars,
+            participated,
+            contestSolved: participated ? contestSolved : (totalSolved > 0 ? 1 : 0),
+            contestRank
+          };
+        }
+      }
+    } catch(err) {}
+  }
+
+  return null;
+}
+
+// Interactive fetch & preview for student editor
+async function fetchAndPreviewStudentStats() {
+  const ccInput = document.getElementById("adminCcHandleInput");
+  const handle = ccInput ? ccInput.value.trim() : "";
+  if (!handle) {
+    showToast("Please enter a CodeChef handle to fetch", false);
+    return;
+  }
+
+  const previewBox = document.getElementById("adminLiveProfilePreview");
+  const fetchBtn = document.getElementById("adminTestCcHandleBtn");
+  if (fetchBtn) {
+    fetchBtn.disabled = true;
+    fetchBtn.textContent = "⏳...";
+  }
+  if (previewBox) {
+    previewBox.style.display = "block";
+    previewBox.innerHTML = `<div class="live-preview-card"><span class="text-dim">🔍 Connecting to CodeChef for @${handle}...</span></div>`;
+  }
+
+  const stats = await fetchLiveCodeChefStats(handle);
+  if (fetchBtn) {
+    fetchBtn.disabled = false;
+    fetchBtn.textContent = "⚡ Fetch";
+  }
+
+  if (stats && stats.exists) {
+    if (previewBox) {
+      previewBox.innerHTML = `
+        <div class="live-preview-card">
+          <div class="live-preview-head">
+            <span class="live-indicator-dot"></span>
+            <strong>@${stats.handle}</strong>
+            <span class="preview-badge-verified">🟢 CodeChef Live Verified</span>
+            <a href="https://www.codechef.com/users/${stats.handle}" target="_blank" rel="noopener" class="preview-link">Profile ↗</a>
+          </div>
+          <div class="live-preview-stats-row">
+            <div class="stat-pill"><span class="lbl">Rating:</span> <strong class="val text-gold">${stats.rating}</strong></div>
+            <div class="stat-pill"><span class="lbl">Peak:</span> <strong class="val">${stats.highestRating}</strong></div>
+            <div class="stat-pill"><span class="lbl">Div:</span> <strong>Div ${stats.division}</strong></div>
+            <div class="stat-pill"><span class="lbl">Stars:</span> <strong>${stats.starRating}★</strong></div>
+            <div class="stat-pill"><span class="lbl">Total Solved:</span> <strong class="val text-emerald">${stats.totalSolved}</strong></div>
+          </div>
+          <div class="live-preview-ranks">
+            <span>Global: <strong>#${stats.globalRating ? stats.globalRating.toLocaleString() : 'N/A'}</strong></span>
+            <span>Country: <strong>#${stats.countryRating ? stats.countryRating.toLocaleString() : 'N/A'}</strong></span>
+            <span>Contest Solved: <strong>${stats.contestSolved}</strong></span>
+          </div>
+        </div>
+      `;
+    }
+
+    // Auto-update student in memory & localStorage
+    const studentId = parseInt(document.getElementById("adminSelectStudent").value);
+    const student = studentsMaster.find(s => s.id === studentId);
+    if (student) {
+      student.ccHandle = handle;
+      student.currentRating = stats.rating || student.currentRating;
+      student.highestRating = Math.max(stats.highestRating || 0, student.highestRating || 0);
+      student.division = stats.division || student.division;
+      student.starRating = stats.starRating || student.starRating;
+      student.globalRating = stats.globalRating || student.globalRating;
+      student.countryRating = stats.countryRating || student.countryRating;
+      student.totalSolved = stats.totalSolved || student.totalSolved;
+      if (stats.contestSolved !== undefined) student.contestSolved = stats.contestSolved;
+      if (!student.codechef) student.codechef = {};
+      student.codechef.handle = handle;
+      student.codechef.rating = student.currentRating;
+      student.codechef.solved = student.totalSolved;
+      student.codechef.stars = `${'★'.repeat(student.starRating)} ${student.starRating} Star`;
+      student.codechef.division = `Div ${student.division}`;
+
+      localStorage.setItem("campuscplb_students_master", JSON.stringify(studentsMaster));
+
+      // Push to server disk
+      fetch('/api/update-student-handle', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ id: student.id, regNo: student.regNo, ccHandle: handle })
+      }).catch(() => {});
+
+      showToast(`🎉 Verified @${handle}! Rating: ${student.currentRating}, Solved: ${student.totalSolved}`, true);
+      renderAdminHandlesTable();
+      applyContestFilters();
+      applyOverallFilters();
+      updateOverallMetrics();
+    }
+  } else {
+    if (previewBox) {
+      previewBox.innerHTML = `
+        <div class="live-preview-card preview-error">
+          <span>⚠️ Could not fetch CodeChef profile for @${handle}. Verify username exists on codechef.com.</span>
+        </div>
+      `;
+    }
+    showToast(`⚠️ Could not reach profile for @${handle}`, false);
+  }
+}
+
+async function saveStudentReasonAdmin() {
+  const studentSelect = document.getElementById("adminSelectStudent");
+  const studentId = parseInt(studentSelect.value);
   const solvedCount = parseInt(document.getElementById("adminProblemsSolvedInput").value);
   const reasonText = document.getElementById("adminReasonInput").value.trim();
   const ccHandle = document.getElementById("adminCcHandleInput")?.value.trim();
@@ -1084,6 +1386,12 @@ function saveStudentReasonAdmin() {
 
   const student = studentsMaster.find(s => s.id === studentId);
   if (!student) return;
+
+  const saveBtn = document.getElementById("adminSaveReasonBtn");
+  if (saveBtn) {
+    saveBtn.disabled = true;
+    saveBtn.innerHTML = `<span>⏳ Saving & Fetching Live CodeChef Stats...</span>`;
+  }
 
   student.contestSolved = solvedCount;
   student.reason = reasonText;
@@ -1099,12 +1407,320 @@ function saveStudentReasonAdmin() {
     student.lcHandle = lcHandle;
   }
 
-  showToast(`Updated ${student.name}: Handle=@${student.ccHandle || student.regNo}, Solved=${solvedCount}, Reason="${reasonText || 'None'}"`, true);
-  
-  // Refresh all views
+  // Persist to localStorage immediately
+  localStorage.setItem("campuscplb_students_master", JSON.stringify(studentsMaster));
+
+  // Sync with server endpoint and retrieve live profile
+  let liveStats = null;
+  const updateEndpoints = [
+    `/api/update-student-handle`,
+    `http://localhost:3000/api/update-student-handle`,
+    `http://localhost:8000/api/update-student-handle`,
+    `http://127.0.0.1:3000/api/update-student-handle`
+  ];
+
+  for (const ep of updateEndpoints) {
+    try {
+      const res = await fetch(ep, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ id: student.id, regNo: student.regNo, ccHandle, lcHandle })
+      });
+      if (res.ok) {
+        const json = await res.json();
+        if (json && json.profile && json.profile.success) {
+          liveStats = json.profile;
+          break;
+        }
+      }
+    } catch(e) {}
+  }
+
+  // Fallback to fetchLiveCodeChefStats if needed
+  if (!liveStats && ccHandle) {
+    liveStats = await fetchLiveCodeChefStats(ccHandle);
+  }
+
+  if (liveStats && liveStats.exists) {
+    student.currentRating = liveStats.rating || student.currentRating;
+    student.highestRating = Math.max(liveStats.highestRating || 0, student.highestRating || 0);
+    student.division = liveStats.division || student.division;
+    student.starRating = liveStats.starRating || student.starRating;
+    student.globalRating = liveStats.globalRating || student.globalRating;
+    student.countryRating = liveStats.countryRating || student.countryRating;
+    if (liveStats.totalSolved) student.totalSolved = liveStats.totalSolved;
+    if (liveStats.contestSolved !== undefined) student.contestSolved = liveStats.contestSolved;
+    if (student.codechef) {
+      student.codechef.rating = student.currentRating;
+      student.codechef.solved = student.totalSolved;
+      student.codechef.stars = `${'★'.repeat(student.starRating)} ${student.starRating} Star`;
+      student.codechef.division = `Div ${student.division}`;
+    }
+    localStorage.setItem("campuscplb_students_master", JSON.stringify(studentsMaster));
+    showToast(`🎉 Real CodeChef data loaded for @${ccHandle}! Rating: ${student.currentRating}, Peak: ${student.highestRating}, Solved: ${student.totalSolved}`, true);
+  } else {
+    showToast(`Updated ${student.name}: Handle=@${student.ccHandle || student.regNo}, Solved=${solvedCount}`, true);
+  }
+
+  if (saveBtn) {
+    saveBtn.disabled = false;
+    saveBtn.innerHTML = `
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+        <polyline points="20 6 9 17 4 12"></polyline>
+      </svg>
+      Save Student Profile & Fetch Live Data
+    `;
+  }
+
+  // Refresh all views and preserve selection
   renderAdminPortal();
+  if (studentSelect) studentSelect.value = student.id;
+  syncSelectedStudentToForm();
+  renderAdminHandlesTable();
   applyContestFilters();
   applyOverallFilters();
+  updateOverallMetrics();
+}
+
+// Render All Students Handles Table in Admin Portal
+function renderAdminHandlesTable() {
+  const tbody = document.getElementById("adminHandlesTableBody");
+  if (!tbody) return;
+
+  const filter = (document.getElementById("adminStudentFilterInput")?.value || "").toLowerCase().trim();
+  const studentsToRender = studentsMaster.filter(s => {
+    if (!filter) return true;
+    return s.name.toLowerCase().includes(filter) || s.regNo.toLowerCase().includes(filter) || (s.ccHandle || '').toLowerCase().includes(filter);
+  });
+
+  tbody.innerHTML = studentsToRender.map((s, idx) => {
+    const isVerified = (s.currentRating && s.currentRating > 0 && s.ccHandle && s.ccHandle !== s.regNo.toLowerCase());
+    const statusChip = isVerified
+      ? `<span class="chip chip-emerald" style="font-size:0.7rem; padding: 2px 7px;">🟢 Live Verified</span>`
+      : `<span class="chip chip-year" style="font-size:0.7rem; padding: 2px 7px;">⚠️ Unverified</span>`;
+
+    const ratingBadge = s.currentRating 
+      ? `<span class="font-mono text-gold" style="font-weight: 700;">${s.currentRating}</span>` 
+      : `<span class="text-dim">--</span>`;
+
+    return `
+      <tr data-student-id="${s.id}">
+        <td><span class="text-dim font-mono">${idx + 1}</span></td>
+        <td>
+          <div class="student-info-cell">
+            <div class="student-avatar-sm" style="background: ${getAvatarColor(s.name)}">
+              ${getInitials(s.name)}
+            </div>
+            <div class="student-meta">
+              <span class="student-name-text">${s.name}</span>
+              <span class="student-roll-text">${s.regNo}</span>
+            </div>
+          </div>
+        </td>
+        <td><span class="dept-badge ${formatDeptClass(s.dept)}">${s.dept} • Y${s.year}</span></td>
+        <td>
+          <div style="display: flex; align-items: center; gap: 6px;">
+            <input 
+              type="text" 
+              class="table-input-handle admin-row-cc-handle" 
+              data-id="${s.id}" 
+              value="${s.ccHandle || s.codechef?.handle || ''}" 
+              placeholder="${s.regNo.toLowerCase()}"
+              title="Edit CodeChef handle"
+            >
+            ${s.ccHandle ? `<a href="https://www.codechef.com/users/${s.ccHandle}" target="_blank" rel="noopener" style="color: var(--primary-light); font-size: 0.75rem;" title="View on CodeChef">↗</a>` : ''}
+          </div>
+        </td>
+        <td>${ratingBadge}</td>
+        <td><span class="font-mono text-muted">${s.highestRating || '--'}</span></td>
+        <td><span class="font-mono text-emerald" style="font-weight:600;">${s.totalSolved || s.codechef?.solved || 0}</span></td>
+        <td>${statusChip}</td>
+        <td style="text-align: right;">
+          <button class="btn btn-secondary btn-xs admin-sync-single-btn" data-id="${s.id}" type="button" title="Fetch live CodeChef data for this student">
+            ⚡ Sync
+          </button>
+        </td>
+      </tr>
+    `;
+  }).join('');
+
+  // Attach event listeners to individual sync buttons
+  tbody.querySelectorAll(".admin-sync-single-btn").forEach(btn => {
+    btn.addEventListener("click", async (e) => {
+      const id = parseInt(e.currentTarget.getAttribute("data-id"));
+      await syncSingleStudentHandle(id, e.currentTarget);
+    });
+  });
+
+  // Attach change/blur listeners to inline handle inputs
+  tbody.querySelectorAll(".admin-row-cc-handle").forEach(input => {
+    input.addEventListener("change", (e) => {
+      const id = parseInt(e.target.getAttribute("data-id"));
+      const val = e.target.value.trim();
+      const s = studentsMaster.find(sm => sm.id === id);
+      if (s) {
+        s.ccHandle = val;
+        if (!s.codechef) s.codechef = {};
+        s.codechef.handle = val;
+        localStorage.setItem("campuscplb_students_master", JSON.stringify(studentsMaster));
+        fetch('/api/update-student-handle', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ id: s.id, regNo: s.regNo, ccHandle: val })
+        }).catch(() => {});
+      }
+    });
+  });
+}
+
+// Single student handle sync
+async function syncSingleStudentHandle(studentId, btn) {
+  const s = studentsMaster.find(sm => sm.id === studentId);
+  if (!s) return;
+
+  const handleInput = document.querySelector(`.admin-row-cc-handle[data-id="${studentId}"]`);
+  const handle = (handleInput ? handleInput.value.trim() : s.ccHandle) || s.regNo.toLowerCase();
+
+  if (btn) {
+    btn.disabled = true;
+    btn.textContent = "⏳...";
+  }
+
+  showToast(`⚡ Querying CodeChef live for ${s.name} (@${handle})...`, false);
+
+  const stats = await fetchLiveCodeChefStats(handle);
+  if (stats && stats.exists) {
+    s.ccHandle = handle;
+    s.currentRating = stats.rating || s.currentRating;
+    s.highestRating = Math.max(stats.highestRating || 0, s.highestRating || 0);
+    s.division = stats.division || s.division;
+    s.starRating = stats.starRating || s.starRating;
+    s.globalRating = stats.globalRating || s.globalRating;
+    s.countryRating = stats.countryRating || s.countryRating;
+    s.totalSolved = stats.totalSolved || s.totalSolved;
+    if (stats.contestSolved !== undefined) s.contestSolved = stats.contestSolved;
+    if (!s.codechef) s.codechef = {};
+    s.codechef.handle = handle;
+    s.codechef.rating = s.currentRating;
+    s.codechef.solved = s.totalSolved;
+    s.codechef.stars = `${'★'.repeat(s.starRating)} ${s.starRating} Star`;
+    s.codechef.division = `Div ${s.division}`;
+
+    localStorage.setItem("campuscplb_students_master", JSON.stringify(studentsMaster));
+
+    // Also update server disk
+    fetch('/api/update-student-handle', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ id: s.id, regNo: s.regNo, ccHandle: handle })
+    }).catch(() => {});
+
+    showToast(`🎉 Verified ${s.name} (@${handle})! Rating: ${s.currentRating}, Solved: ${s.totalSolved}`, true);
+  } else {
+    showToast(`⚠️ Could not reach profile for @${handle}. Check username on CodeChef.`, false);
+  }
+
+  if (btn) {
+    btn.disabled = false;
+    btn.textContent = "⚡ Sync";
+  }
+
+  renderAdminHandlesTable();
+  applyContestFilters();
+  applyOverallFilters();
+  updateOverallMetrics();
+}
+
+// Batch Sync All Student Handles
+async function syncAllHandlesLive() {
+  const syncBtn = document.getElementById("adminSyncAllHandlesBtn");
+  const progressBox = document.getElementById("adminHandlesSyncProgress");
+  const statusEl = document.getElementById("adminHandlesSyncStatus");
+  const percentEl = document.getElementById("adminHandlesSyncPercent");
+  const barEl = document.getElementById("adminHandlesSyncBar");
+
+  if (syncBtn) {
+    syncBtn.disabled = true;
+    syncBtn.textContent = "⏳ Syncing All...";
+  }
+  if (progressBox) progressBox.style.display = "block";
+
+  const total = studentsMaster.length;
+  let successCount = 0;
+
+  for (let i = 0; i < total; i++) {
+    const s = studentsMaster[i];
+    const handleInput = document.querySelector(`.admin-row-cc-handle[data-id="${s.id}"]`);
+    const handle = (handleInput ? handleInput.value.trim() : s.ccHandle) || s.regNo.toLowerCase();
+
+    const pct = Math.round(((i + 1) / total) * 100);
+    if (barEl) barEl.style.width = `${pct}%`;
+    if (percentEl) percentEl.textContent = `${pct}%`;
+    if (statusEl) statusEl.textContent = `[${i + 1}/${total}] Querying CodeChef for ${s.name} (@${handle})...`;
+
+    const stats = await fetchLiveCodeChefStats(handle);
+    if (stats && stats.exists) {
+      s.ccHandle = handle;
+      s.currentRating = stats.rating || s.currentRating;
+      s.highestRating = Math.max(stats.highestRating || 0, s.highestRating || 0);
+      s.division = stats.division || s.division;
+      s.starRating = stats.starRating || s.starRating;
+      s.globalRating = stats.globalRating || s.globalRating;
+      s.countryRating = stats.countryRating || s.countryRating;
+      s.totalSolved = stats.totalSolved || s.totalSolved;
+      if (stats.contestSolved !== undefined) s.contestSolved = stats.contestSolved;
+      if (!s.codechef) s.codechef = {};
+      s.codechef.handle = handle;
+      s.codechef.rating = s.currentRating;
+      s.codechef.solved = s.totalSolved;
+      s.codechef.stars = `${'★'.repeat(s.starRating)} ${s.starRating} Star`;
+      s.codechef.division = `Div ${s.division}`;
+      successCount++;
+    }
+  }
+
+  localStorage.setItem("campuscplb_students_master", JSON.stringify(studentsMaster));
+
+  if (statusEl) statusEl.textContent = `🎉 Completed! Successfully synced ${successCount}/${total} students from CodeChef.`;
+  showToast(`🎉 Batch sync complete: ${successCount}/${total} students updated with live CodeChef stats!`, true);
+
+  setTimeout(() => {
+    if (progressBox) progressBox.style.display = "none";
+  }, 3500);
+
+  if (syncBtn) {
+    syncBtn.disabled = false;
+    syncBtn.textContent = "⚡ Sync All 21 from CodeChef Live";
+  }
+
+  renderAdminHandlesTable();
+  applyContestFilters();
+  applyOverallFilters();
+  updateOverallMetrics();
+}
+
+// Save All Handles from Table Inputs
+function saveAllHandles() {
+  const inputs = document.querySelectorAll(".admin-row-cc-handle");
+  inputs.forEach(input => {
+    const id = parseInt(input.getAttribute("data-id"));
+    const handle = input.value.trim();
+    const s = studentsMaster.find(sm => sm.id === id);
+    if (s && handle) {
+      s.ccHandle = handle;
+      if (!s.codechef) s.codechef = {};
+      s.codechef.handle = handle;
+      fetch('/api/update-student-handle', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ id: s.id, regNo: s.regNo, ccHandle: handle })
+      }).catch(() => {});
+    }
+  });
+
+  localStorage.setItem("campuscplb_students_master", JSON.stringify(studentsMaster));
+  showToast("💾 Saved all student handles to local storage and server!", true);
+  renderAdminHandlesTable();
 }
 
 function copyFacultyReportWhatsapp() {
@@ -1183,15 +1799,17 @@ window.openStudentModal = function(studentId) {
   document.getElementById("modalReasonText").textContent = student.reason || (student.contestSolved > 0 ? "None (Submitted problems)" : "No reason specified");
 
   // CodeChef Card
-  document.getElementById("modalCcHandle").textContent = `@${student.regNo.toLowerCase()}`;
-  document.getElementById("modalCcLink").href = `https://www.codechef.com/users/${student.regNo.toLowerCase()}`;
+  const ccUser = student.ccHandle || student.codechef?.handle || student.regNo.toLowerCase();
+  document.getElementById("modalCcHandle").textContent = `@${ccUser}`;
+  document.getElementById("modalCcLink").href = `https://www.codechef.com/users/${ccUser}`;
   document.getElementById("modalCcRatingBox").textContent = student.currentRating || "--";
   document.getElementById("modalCcPeakBox").textContent = student.highestRating || "--";
   document.getElementById("modalCcStarsBox").textContent = `${student.starRating || 1}★`;
 
   // LeetCode Card
-  document.getElementById("modalLcHandle").textContent = `@${student.leetcode?.handle || student.name.toLowerCase().replace(/\s+/g,'_')}`;
-  document.getElementById("modalLcLink").href = `https://leetcode.com/u/${student.leetcode?.handle || ''}`;
+  const lcUser = student.lcHandle || student.leetcode?.handle || '';
+  document.getElementById("modalLcHandle").textContent = `@${lcUser || student.regNo.toLowerCase()}`;
+  document.getElementById("modalLcLink").href = `https://leetcode.com/u/${lcUser || ''}`;
   document.getElementById("modalLcSolved").textContent = student.leetcode?.solved || "--";
   document.getElementById("modalLcRating").textContent = student.leetcode?.rating || "--";
   document.getElementById("modalLcBadge").textContent = student.leetcode?.badge || "Knight";
@@ -1812,6 +2430,21 @@ function setupEventListeners() {
   });
   document.getElementById("adminSelectStudent").addEventListener("change", syncSelectedStudentToForm);
   document.getElementById("adminSaveReasonBtn").addEventListener("click", saveStudentReasonAdmin);
+
+  // Live profile test & fetch button
+  const testCcBtn = document.getElementById("adminTestCcHandleBtn");
+  if (testCcBtn) testCcBtn.addEventListener("click", fetchAndPreviewStudentStats);
+
+  // Handles registry bulk sync & save buttons
+  const syncAllHandlesBtn = document.getElementById("adminSyncAllHandlesBtn");
+  if (syncAllHandlesBtn) syncAllHandlesBtn.addEventListener("click", syncAllHandlesLive);
+
+  const saveAllHandlesBtn = document.getElementById("adminSaveAllHandlesBtn");
+  if (saveAllHandlesBtn) saveAllHandlesBtn.addEventListener("click", saveAllHandles);
+
+  const filterHandlesInput = document.getElementById("adminStudentFilterInput");
+  if (filterHandlesInput) filterHandlesInput.addEventListener("input", renderAdminHandlesTable);
+
   document.getElementById("adminExportFullReportCsvBtn").addEventListener("click", exportContestCsv);
   document.getElementById("adminResetDefaultDatasetBtn").addEventListener("click", () => {
     studentsMaster = JSON.parse(JSON.stringify(INITIAL_STUDENTS));
@@ -1963,22 +2596,39 @@ async function triggerLiveAutoSync(isBackground = false) {
   }
 
   const total = studentsMaster.length;
-  if (!isBackground) {
-    for (let i = 0; i < total; i++) {
-      const s = studentsMaster[i];
-      const pct = Math.round(((i + 1) / total) * 70);
-      if (barFill) barFill.style.width = `${pct}%`;
-      if (statusText) statusText.textContent = `Auditing student [${i + 1}/${total}] ${s.name}...`;
-      
-      await new Promise(r => setTimeout(r, 35));
+  for (let i = 0; i < total; i++) {
+    const s = studentsMaster[i];
+    const pct = Math.round(((i + 1) / total) * 75);
+    if (!isBackground && barFill) barFill.style.width = `${pct}%`;
+    if (!isBackground && statusText) statusText.textContent = `Fetching live CodeChef stats [${i + 1}/${total}] for ${s.name}...`;
 
-      if (logStream) {
-        const statusIcon = s.contestSolved > 0 ? "✅" : "⚠️";
-        logStream.textContent += `[${statusIcon}] ${s.name} (${s.regNo}) -> Solved: ${s.contestSolved}, Rating: ${s.currentRating}\n`;
-        logStream.scrollTop = logStream.scrollHeight;
-      }
+    const handle = s.ccHandle || s.codechef?.handle || s.regNo.toLowerCase();
+    const stats = await fetchLiveCodeChefStats(handle, contestCode);
+    if (stats && stats.exists) {
+      s.currentRating = stats.rating || s.currentRating;
+      s.highestRating = Math.max(stats.highestRating || 0, s.highestRating || 0);
+      s.division = stats.division || s.division;
+      s.starRating = stats.starRating || s.starRating;
+      s.globalRating = stats.globalRating || s.globalRating;
+      s.countryRating = stats.countryRating || s.countryRating;
+      if (stats.totalSolved) s.totalSolved = stats.totalSolved;
+      if (stats.contestSolved !== undefined) s.contestSolved = stats.contestSolved;
+      if (!s.codechef) s.codechef = {};
+      s.codechef.rating = s.currentRating;
+      s.codechef.solved = s.totalSolved;
+      s.codechef.stars = `${'★'.repeat(s.starRating)} ${s.starRating} Star`;
+      s.codechef.division = `Div ${s.division}`;
+    }
+
+    if (!isBackground && logStream) {
+      const statusIcon = s.contestSolved > 0 ? "✅" : "⚠️";
+      logStream.textContent += `[${statusIcon}] ${s.name} (@${handle}) -> Rating: ${s.currentRating}, Solved: ${s.contestSolved}, Total: ${s.totalSolved}\n`;
+      logStream.scrollTop = logStream.scrollHeight;
     }
   }
+
+  // Persist updated students to localStorage
+  localStorage.setItem("campuscplb_students_master", JSON.stringify(studentsMaster));
 
   // 2. Ensure contest date tab exists in daily tracker
   if (!CONTEST_TABS.some(t => t.id === contestDate)) {

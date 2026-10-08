@@ -3,7 +3,7 @@
   "version": "1.0.0",
   "description": "Modern dark-themed competitive programming leaderboard for college students",
   "scripts": {
-    "start": "python -m http.server 3000",
+    "start": "node server.js",
     "serve": "npx serve ."
   },
   "keywords": ["competitive-programming", "leaderboard", "college", "dark-theme"],

@@ -1,46 +1,28 @@
 {
   "contestCode": "START155",
-  "contestDate": "14.10.2026",
-  "syncedAt": "2026-10-14T20:41:32.123Z",
+  "contestDate": "21.10.2026",
+  "syncedAt": "2026-10-21T20:38:09.351Z",
   "totalStrength": 21,
-  "participated": 2,
-  "absent": 19,
+  "participated": 0,
+  "absent": 21,
   "students": [
-    {
-      "id": 7,
-      "name": "KANISHK M",
-      "regNo": "711525BCS064",
-      "dept": "IT",
-      "year": "4",
-      "contestSolved": 2,
-      "reason": "",
-      "currentRating": 1371,
-      "highestRating": 1411,
-      "division": 4,
-      "starRating": 1,
-      "globalRating": 7884,
-      "countryRating": 29350,
-      "ccHandle": "kanishk_m",
-      "lcHandle": "kanishk_m",
-      "contestRank": 1
-    },
     {
       "id": 1,
       "name": "BHARATHKUMAR A K",
       "regNo": "711525BCS016",
       "dept": "CSE",
       "year": "4",
-      "contestSolved": 2,
-      "reason": "",
-      "currentRating": 817,
-      "highestRating": 959,
+      "contestSolved": 0,
+      "reason": "Uninformed Absent / No submission in contest",
+      "currentRating": 1000,
+      "highestRating": 1050,
       "division": 4,
       "starRating": 1,
-      "globalRating": 23441,
-      "countryRating": 185230,
+      "globalRating": null,
+      "countryRating": null,
       "ccHandle": "bharathkumarak",
       "lcHandle": "bharathkumarak",
-      "contestRank": 2
+      "contestRank": 1
     },
     {
       "id": 2,
@@ -54,11 +36,11 @@
       "highestRating": 1050,
       "division": 4,
       "starRating": 1,
-      "globalRating": 18421,
-      "countryRating": 18240,
+      "globalRating": null,
+      "countryRating": null,
       "ccHandle": "dhakshithaa_jr",
       "lcHandle": "dhakshithaa_jr",
-      "contestRank": 3
+      "contestRank": 2
     },
     {
       "id": 3,
@@ -72,11 +54,11 @@
       "highestRating": 1050,
       "division": 4,
       "starRating": 1,
-      "globalRating": 27486,
-      "countryRating": 10894,
+      "globalRating": null,
+      "countryRating": null,
       "ccHandle": "kamesh_m",
       "lcHandle": "kamesh_m",
-      "contestRank": 4
+      "contestRank": 3
     },
     {
       "id": 4,
@@ -90,11 +72,11 @@
       "highestRating": 1050,
       "division": 4,
       "starRating": 1,
-      "globalRating": 27162,
-      "countryRating": 13254,
+      "globalRating": null,
+      "countryRating": null,
       "ccHandle": "hemasri_s",
       "lcHandle": "hemasri_s",
-      "contestRank": 5
+      "contestRank": 4
     },
     {
       "id": 5,
@@ -108,11 +90,11 @@
       "highestRating": 1050,
       "division": 4,
       "starRating": 1,
-      "globalRating": 13657,
-      "countryRating": 34134,
+      "globalRating": null,
+      "countryRating": null,
       "ccHandle": "harisivam_s",
       "lcHandle": "harisivam_s",
-      "contestRank": 6
+      "contestRank": 5
     },
     {
       "id": 6,
@@ -130,6 +112,24 @@
       "countryRating": null,
       "ccHandle": "ajo_limis",
       "lcHandle": "ajo_limis",
+      "contestRank": 6
+    },
+    {
+      "id": 7,
+      "name": "KANISHK M",
+      "regNo": "711525BCS064",
+      "dept": "IT",
+      "year": "4",
+      "contestSolved": 0,
+      "reason": "Uninformed Absent / No submission in contest",
+      "currentRating": 1000,
+      "highestRating": 1050,
+      "division": 4,
+      "starRating": 1,
+      "globalRating": null,
+      "countryRating": null,
+      "ccHandle": "kanishk_m",
+      "lcHandle": "kanishk_m",
       "contestRank": 7
     },
     {
@@ -144,8 +144,8 @@
       "highestRating": 1050,
       "division": 4,
       "starRating": 1,
-      "globalRating": 12798,
-      "countryRating": 25579,
+      "globalRating": null,
+      "countryRating": null,
       "ccHandle": "joshini_sri",
       "lcHandle": "joshini_sri",
       "contestRank": 8
@@ -162,8 +162,8 @@
       "highestRating": 1050,
       "division": 4,
       "starRating": 1,
-      "globalRating": 27861,
-      "countryRating": 9301,
+      "globalRating": null,
+      "countryRating": null,
       "ccHandle": "keerthana_r",
       "lcHandle": "keerthana_r",
       "contestRank": 9
@@ -180,8 +180,8 @@
       "highestRating": 1050,
       "division": 4,
       "starRating": 1,
-      "globalRating": 25138,
-      "countryRating": 21574,
+      "globalRating": null,
+      "countryRating": null,
       "ccHandle": "barani_v",
       "lcHandle": "barani_v",
       "contestRank": 10

@@ -1,27 +1,13 @@
 {
-  "lastSynced": "2026-10-14T20:48:04.610Z",
-  "totalCount": 16,
+  "lastSynced": "2026-10-21T20:44:49.238Z",
+  "totalCount": 15,
   "counts": {
-    "codechef": 4,
+    "codechef": 0,
     "leetcode": 2,
-    "codeforces": 3,
+    "codeforces": 6,
     "atcoder": 7
   },
   "contests": [
-    {
-      "id": "at_abc477",
-      "platform": "atcoder",
-      "platformName": "AtCoder",
-      "title": "UNICORNプログラミングコンテスト2026(AtCoder Beginner Contest 477)",
-      "startTime": "2026-09-26T12:00:00.000Z",
-      "endTime": "2026-09-26T13:40:00.000Z",
-      "durationMinutes": 100,
-      "durationLabel": "1 Hr 40 Min",
-      "rated": "~ 1999",
-      "type": "ABC Round",
-      "url": "https://atcoder.jp/contests/abc477",
-      "description": "Official AtCoder Contest: UNICORNプログラミングコンテスト2026(AtCoder Beginner Contest 477)."
-    },
     {
       "id": "at_abc478",
       "platform": "atcoder",
@@ -65,18 +51,18 @@
       "description": "Official AtCoder Contest: オムロンプログラミングコンテスト2026 （AtCoder Beginner Contest 479）."
     },
     {
-      "id": "cc_placeprep12",
-      "platform": "codechef",
-      "platformName": "CodeChef",
-      "title": "CodeChef Placement Prep Weekends - 12",
-      "startTime": "2026-10-17T00:00:28+05:30",
-      "endTime": "2026-10-19T01:59:00+05:30",
-      "durationMinutes": 120,
-      "durationLabel": "2 Hours",
-      "rated": "Rated for Div 2, 3 & 4",
-      "type": "Starters Round",
-      "url": "https://www.codechef.com/PLACEPREP12",
-      "description": "Official CodeChef Contest: Placement Prep Weekends - 12 (PLACEPREP12). Duration: 2 Hours."
+      "id": "at_abc480",
+      "platform": "atcoder",
+      "platformName": "AtCoder",
+      "title": "AtCoder Talent Quest 〜 今から28卒には脱出してもらいます〜予選 #2（AtCoder Beginner Contest 480）",
+      "startTime": "2026-10-17T12:00:00.000Z",
+      "endTime": "2026-10-17T13:40:00.000Z",
+      "durationMinutes": 100,
+      "durationLabel": "1 Hr 40 Min",
+      "rated": "~ 1999",
+      "type": "ABC Round",
+      "url": "https://atcoder.jp/contests/abc480",
+      "description": "Official AtCoder Contest: AtCoder Talent Quest 〜 今から28卒には脱出してもらいます〜予選 #2（AtCoder Beginner Contest 480）."
     },
     {
       "id": "at_abc480",
@@ -93,66 +79,10 @@
       "description": "Official AtCoder Contest: AtCoder Beginner Contest 480."
     },
     {
-      "id": "cf_2261",
-      "platform": "codeforces",
-      "platformName": "Codeforces",
-      "title": "WorldQuant Round 1 (Codeforces Round 1128, Div. 1 + Div. 2)",
-      "startTime": "2026-10-17T14:35:00.000Z",
-      "endTime": "2026-10-17T17:35:00.000Z",
-      "durationMinutes": 180,
-      "durationLabel": "3 Hours",
-      "rated": "Rated Div 1",
-      "type": "CF",
-      "url": "https://codeforces.com/contest/2261",
-      "description": "Official Codeforces Round: WorldQuant Round 1 (Codeforces Round 1128, Div. 1 + Div. 2). Format: CF."
-    },
-    {
-      "id": "lc_weekly-contest-524",
-      "platform": "leetcode",
-      "platformName": "LeetCode",
-      "title": "LeetCode Weekly Contest 524",
-      "startTime": "2026-10-18T02:30:00.000Z",
-      "endTime": "2026-10-18T04:00:00.000Z",
-      "durationMinutes": 90,
-      "durationLabel": "90 Mins",
-      "rated": "Rated for All Users",
-      "type": "Weekly Contest",
-      "url": "https://leetcode.com/contest/weekly-contest-524",
-      "description": "Official LeetCode Weekly Contest 524. 4 algorithmic problems (1 Easy, 2 Medium, 1 Hard). Penalty: 5 mins."
-    },
-    {
-      "id": "cc_dsamonday025",
-      "platform": "codechef",
-      "platformName": "CodeChef",
-      "title": "CodeChef Monday Munch - DSA Challenge 025 (Rated)",
-      "startTime": "2026-10-19T19:00:00+05:30",
-      "endTime": "2026-10-19T22:00:00+05:30",
-      "durationMinutes": 180,
-      "durationLabel": "3 Hours",
-      "rated": "Rated for Div 2, 3 & 4",
-      "type": "Starters Round",
-      "url": "https://www.codechef.com/DSAMONDAY025",
-      "description": "Official CodeChef Contest: Monday Munch - DSA Challenge 025 (Rated) (DSAMONDAY025). Duration: 3 Hours."
-    },
-    {
-      "id": "cc_start261",
-      "platform": "codechef",
-      "platformName": "CodeChef",
-      "title": "CodeChef Starters 261",
-      "startTime": "2026-10-21T20:00:00+05:30",
-      "endTime": "2026-10-21T22:00:00+05:30",
-      "durationMinutes": 120,
-      "durationLabel": "2 Hours",
-      "rated": "Rated for Div 2, 3 & 4",
-      "type": "Starters Round",
-      "url": "https://www.codechef.com/START261",
-      "description": "Official CodeChef Contest: Starters 261 (START261). Duration: 2 Hours."
-    },
-    {
       "id": "cf_2277",
       "platform": "codeforces",
       "platformName": "Codeforces",
-      "title": "Codeforces Round (Div. 2)",
+      "title": "Codeforces Round 1129 (Div. 2)",
       "startTime": "2026-10-24T11:05:00.000Z",
       "endTime": "2026-10-24T13:05:00.000Z",
       "durationMinutes": 120,
@@ -160,7 +90,7 @@
       "rated": "Rated Div 2",
       "type": "CF",
       "url": "https://codeforces.com/contest/2277",
-      "description": "Official Codeforces Round: Codeforces Round (Div. 2). Format: CF."
+      "description": "Official Codeforces Round: Codeforces Round 1129 (Div. 2). Format: CF."
     },
     {
       "id": "at_abc481",
@@ -191,10 +121,24 @@
       "description": "Official LeetCode Biweekly Contest 194. 4 algorithmic problems (1 Easy, 2 Medium, 1 Hard). Penalty: 5 mins."
     },
     {
+      "id": "lc_weekly-contest-525",
+      "platform": "leetcode",
+      "platformName": "LeetCode",
+      "title": "LeetCode Weekly Contest 525",
+      "startTime": "2026-10-25T02:30:00.000Z",
+      "endTime": "2026-10-25T04:00:00.000Z",
+      "durationMinutes": 90,
+      "durationLabel": "90 Mins",
+      "rated": "Rated for All Users",
+      "type": "Weekly Contest",
+      "url": "https://leetcode.com/contest/weekly-contest-525",
+      "description": "Official LeetCode Weekly Contest 525. 4 algorithmic problems (1 Easy, 2 Medium, 1 Hard). Penalty: 5 mins."
+    },
+    {
       "id": "cf_2272",
       "platform": "codeforces",
       "platformName": "Codeforces",
-      "title": "Codeforces Round (Div. 2)",
+      "title": "Codeforces Round 1130 (Div. 2)",
       "startTime": "2026-10-26T14:35:00.000Z",
       "endTime": "2026-10-26T16:50:00.000Z",
       "durationMinutes": 135,
@@ -202,21 +146,7 @@
       "rated": "Rated Div 2",
       "type": "CF",
       "url": "https://codeforces.com/contest/2272",
-      "description": "Official Codeforces Round: Codeforces Round (Div. 2). Format: CF."
-    },
-    {
-      "id": "cc_start262",
-      "platform": "codechef",
-      "platformName": "CodeChef",
-      "title": "CodeChef Starters 262",
-      "startTime": "2026-10-28T20:00:00+05:30",
-      "endTime": "2026-10-28T22:00:00+05:30",
-      "durationMinutes": 120,
-      "durationLabel": "2 Hours",
-      "rated": "Rated for Div 2, 3 & 4",
-      "type": "Starters Round",
-      "url": "https://www.codechef.com/START262",
-      "description": "Official CodeChef Contest: Starters 262 (START262). Duration: 2 Hours."
+      "description": "Official Codeforces Round: Codeforces Round 1130 (Div. 2). Format: CF."
     },
     {
       "id": "at_abc482",
@@ -231,6 +161,62 @@
       "type": "ABC Round",
       "url": "https://atcoder.jp/contests/abc482",
       "description": "Official AtCoder Contest: AtCoder Beginner Contest 482."
+    },
+    {
+      "id": "cf_2278",
+      "platform": "codeforces",
+      "platformName": "Codeforces",
+      "title": "Codeforces Round 1131 (Div. 3)",
+      "startTime": "2026-10-31T14:35:00.000Z",
+      "endTime": "2026-10-31T16:50:00.000Z",
+      "durationMinutes": 135,
+      "durationLabel": "2.3 Hours",
+      "rated": "Rated Div 3",
+      "type": "ICPC",
+      "url": "https://codeforces.com/contest/2278",
+      "description": "Official Codeforces Round: Codeforces Round 1131 (Div. 3). Format: ICPC."
+    },
+    {
+      "id": "cf_2281",
+      "platform": "codeforces",
+      "platformName": "Codeforces",
+      "title": "ICPC 2026 Online Challenge 2 powered by Huawei",
+      "startTime": "2026-11-05T11:00:00.000Z",
+      "endTime": "2026-11-19T11:00:00.000Z",
+      "durationMinutes": 20160,
+      "durationLabel": "336 Hours",
+      "rated": "Rated Div 2",
+      "type": "IOI",
+      "url": "https://codeforces.com/contest/2281",
+      "description": "Official Codeforces Round: ICPC 2026 Online Challenge 2 powered by Huawei. Format: IOI."
+    },
+    {
+      "id": "cf_2279",
+      "platform": "codeforces",
+      "platformName": "Codeforces",
+      "title": "Codeforces Round (Div. 1)",
+      "startTime": "2026-11-07T14:35:00.000Z",
+      "endTime": "2026-11-07T17:05:00.000Z",
+      "durationMinutes": 150,
+      "durationLabel": "2.5 Hours",
+      "rated": "Rated Div 1",
+      "type": "CF",
+      "url": "https://codeforces.com/contest/2279",
+      "description": "Official Codeforces Round: Codeforces Round (Div. 1). Format: CF."
+    },
+    {
+      "id": "cf_2280",
+      "platform": "codeforces",
+      "platformName": "Codeforces",
+      "title": "Codeforces Round (Div. 2)",
+      "startTime": "2026-11-07T14:35:00.000Z",
+      "endTime": "2026-11-07T17:05:00.000Z",
+      "durationMinutes": 150,
+      "durationLabel": "2.5 Hours",
+      "rated": "Rated Div 2",
+      "type": "CF",
+      "url": "https://codeforces.com/contest/2280",
+      "description": "Official Codeforces Round: Codeforces Round (Div. 2). Format: CF."
     }
   ]
 }

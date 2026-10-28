@@ -1,27 +1,13 @@
 {
-  "lastSynced": "2026-10-21T20:44:49.238Z",
-  "totalCount": 15,
+  "lastSynced": "2026-10-28T21:46:14.715Z",
+  "totalCount": 18,
   "counts": {
-    "codechef": 0,
+    "codechef": 1,
     "leetcode": 2,
-    "codeforces": 6,
+    "codeforces": 8,
     "atcoder": 7
   },
   "contests": [
-    {
-      "id": "at_abc478",
-      "platform": "atcoder",
-      "platformName": "AtCoder",
-      "title": "AtCoder Beginner Contest 478",
-      "startTime": "2026-10-03T12:00:00.000Z",
-      "endTime": "2026-10-03T13:40:00.000Z",
-      "durationMinutes": 100,
-      "durationLabel": "1 Hr 40 Min",
-      "rated": "~ 1999",
-      "type": "ABC Round",
-      "url": "https://atcoder.jp/contests/abc478",
-      "description": "Official AtCoder Contest: AtCoder Beginner Contest 478."
-    },
     {
       "id": "at_abc479",
       "platform": "atcoder",
@@ -79,18 +65,18 @@
       "description": "Official AtCoder Contest: AtCoder Beginner Contest 480."
     },
     {
-      "id": "cf_2277",
-      "platform": "codeforces",
-      "platformName": "Codeforces",
-      "title": "Codeforces Round 1129 (Div. 2)",
-      "startTime": "2026-10-24T11:05:00.000Z",
-      "endTime": "2026-10-24T13:05:00.000Z",
-      "durationMinutes": 120,
-      "durationLabel": "2 Hours",
-      "rated": "Rated Div 2",
-      "type": "CF",
-      "url": "https://codeforces.com/contest/2277",
-      "description": "Official Codeforces Round: Codeforces Round 1129 (Div. 2). Format: CF."
+      "id": "at_abc481",
+      "platform": "atcoder",
+      "platformName": "AtCoder",
+      "title": "SMBCプログラミングコンテスト #2（AtCoder Beginner Contest 481）",
+      "startTime": "2026-10-24T12:00:00.000Z",
+      "endTime": "2026-10-24T13:40:00.000Z",
+      "durationMinutes": 100,
+      "durationLabel": "1 Hr 40 Min",
+      "rated": "~ 1999",
+      "type": "ABC Round",
+      "url": "https://atcoder.jp/contests/abc481",
+      "description": "Official AtCoder Contest: SMBCプログラミングコンテスト #2（AtCoder Beginner Contest 481）."
     },
     {
       "id": "at_abc481",
@@ -105,48 +91,6 @@
       "type": "ABC Round",
       "url": "https://atcoder.jp/contests/abc481",
       "description": "Official AtCoder Contest: AtCoder Beginner Contest 481."
-    },
-    {
-      "id": "lc_biweekly-contest-194",
-      "platform": "leetcode",
-      "platformName": "LeetCode",
-      "title": "LeetCode Biweekly Contest 194",
-      "startTime": "2026-10-24T14:30:00.000Z",
-      "endTime": "2026-10-24T16:00:00.000Z",
-      "durationMinutes": 90,
-      "durationLabel": "90 Mins",
-      "rated": "Rated for All Users",
-      "type": "Biweekly Contest",
-      "url": "https://leetcode.com/contest/biweekly-contest-194",
-      "description": "Official LeetCode Biweekly Contest 194. 4 algorithmic problems (1 Easy, 2 Medium, 1 Hard). Penalty: 5 mins."
-    },
-    {
-      "id": "lc_weekly-contest-525",
-      "platform": "leetcode",
-      "platformName": "LeetCode",
-      "title": "LeetCode Weekly Contest 525",
-      "startTime": "2026-10-25T02:30:00.000Z",
-      "endTime": "2026-10-25T04:00:00.000Z",
-      "durationMinutes": 90,
-      "durationLabel": "90 Mins",
-      "rated": "Rated for All Users",
-      "type": "Weekly Contest",
-      "url": "https://leetcode.com/contest/weekly-contest-525",
-      "description": "Official LeetCode Weekly Contest 525. 4 algorithmic problems (1 Easy, 2 Medium, 1 Hard). Penalty: 5 mins."
-    },
-    {
-      "id": "cf_2272",
-      "platform": "codeforces",
-      "platformName": "Codeforces",
-      "title": "Codeforces Round 1130 (Div. 2)",
-      "startTime": "2026-10-26T14:35:00.000Z",
-      "endTime": "2026-10-26T16:50:00.000Z",
-      "durationMinutes": 135,
-      "durationLabel": "2.3 Hours",
-      "rated": "Rated Div 2",
-      "type": "CF",
-      "url": "https://codeforces.com/contest/2272",
-      "description": "Official Codeforces Round: Codeforces Round 1130 (Div. 2). Format: CF."
     },
     {
       "id": "at_abc482",
@@ -177,6 +121,48 @@
       "description": "Official Codeforces Round: Codeforces Round 1131 (Div. 3). Format: ICPC."
     },
     {
+      "id": "lc_weekly-contest-526",
+      "platform": "leetcode",
+      "platformName": "LeetCode",
+      "title": "LeetCode Weekly Contest 526",
+      "startTime": "2026-11-01T02:30:00.000Z",
+      "endTime": "2026-11-01T04:00:00.000Z",
+      "durationMinutes": 90,
+      "durationLabel": "90 Mins",
+      "rated": "Rated for All Users",
+      "type": "Weekly Contest",
+      "url": "https://leetcode.com/contest/weekly-contest-526",
+      "description": "Official LeetCode Weekly Contest 526. 4 algorithmic problems (1 Easy, 2 Medium, 1 Hard). Penalty: 5 mins."
+    },
+    {
+      "id": "cc_dsamonday027",
+      "platform": "codechef",
+      "platformName": "CodeChef",
+      "title": "CodeChef Monday Munch - DSA Challenge 027 (Rated)",
+      "startTime": "2026-11-02T19:00:00+05:30",
+      "endTime": "2026-11-02T22:00:00+05:30",
+      "durationMinutes": 180,
+      "durationLabel": "3 Hours",
+      "rated": "Rated for Div 2, 3 & 4",
+      "type": "Starters Round",
+      "url": "https://www.codechef.com/DSAMONDAY027",
+      "description": "Official CodeChef Contest: Monday Munch - DSA Challenge 027 (Rated) (DSAMONDAY027). Duration: 3 Hours."
+    },
+    {
+      "id": "cf_2283",
+      "platform": "codeforces",
+      "platformName": "Codeforces",
+      "title": "Educational Codeforces Round 196 (Rated for Div. 2)",
+      "startTime": "2026-11-04T14:35:00.000Z",
+      "endTime": "2026-11-04T16:35:00.000Z",
+      "durationMinutes": 120,
+      "durationLabel": "2 Hours",
+      "rated": "Rated Div 2",
+      "type": "ICPC",
+      "url": "https://codeforces.com/contest/2283",
+      "description": "Official Codeforces Round: Educational Codeforces Round 196 (Rated for Div. 2). Format: ICPC."
+    },
+    {
       "id": "cf_2281",
       "platform": "codeforces",
       "platformName": "Codeforces",
@@ -189,6 +175,34 @@
       "type": "IOI",
       "url": "https://codeforces.com/contest/2281",
       "description": "Official Codeforces Round: ICPC 2026 Online Challenge 2 powered by Huawei. Format: IOI."
+    },
+    {
+      "id": "cf_2284",
+      "platform": "codeforces",
+      "platformName": "Codeforces",
+      "title": "Codeforces Round (Div. 2)",
+      "startTime": "2026-11-06T14:35:00.000Z",
+      "endTime": "2026-11-06T16:50:00.000Z",
+      "durationMinutes": 135,
+      "durationLabel": "2.3 Hours",
+      "rated": "Rated Div 2",
+      "type": "CF",
+      "url": "https://codeforces.com/contest/2284",
+      "description": "Official Codeforces Round: Codeforces Round (Div. 2). Format: CF."
+    },
+    {
+      "id": "lc_biweekly-contest-195",
+      "platform": "leetcode",
+      "platformName": "LeetCode",
+      "title": "LeetCode Biweekly Contest 195",
+      "startTime": "2026-11-07T14:30:00.000Z",
+      "endTime": "2026-11-07T16:00:00.000Z",
+      "durationMinutes": 90,
+      "durationLabel": "90 Mins",
+      "rated": "Rated for All Users",
+      "type": "Biweekly Contest",
+      "url": "https://leetcode.com/contest/biweekly-contest-195",
+      "description": "Official LeetCode Biweekly Contest 195. 4 algorithmic problems (1 Easy, 2 Medium, 1 Hard). Penalty: 5 mins."
     },
     {
       "id": "cf_2279",
@@ -217,6 +231,34 @@
       "type": "CF",
       "url": "https://codeforces.com/contest/2280",
       "description": "Official Codeforces Round: Codeforces Round (Div. 2). Format: CF."
+    },
+    {
+      "id": "cf_2285",
+      "platform": "codeforces",
+      "platformName": "Codeforces",
+      "title": "Codeforces Round (Div. 2)",
+      "startTime": "2026-11-15T14:35:00.000Z",
+      "endTime": "2026-11-15T16:35:00.000Z",
+      "durationMinutes": 120,
+      "durationLabel": "2 Hours",
+      "rated": "Rated Div 2",
+      "type": "CF",
+      "url": "https://codeforces.com/contest/2285",
+      "description": "Official Codeforces Round: Codeforces Round (Div. 2). Format: CF."
+    },
+    {
+      "id": "cf_2282",
+      "platform": "codeforces",
+      "platformName": "Codeforces",
+      "title": "Kotlin Heroes: Episode 15",
+      "startTime": "2026-11-27T14:35:00.000Z",
+      "endTime": "2026-11-27T17:05:00.000Z",
+      "durationMinutes": 150,
+      "durationLabel": "2.5 Hours",
+      "rated": "Rated Div 2",
+      "type": "ICPC",
+      "url": "https://codeforces.com/contest/2282",
+      "description": "Official Codeforces Round: Kotlin Heroes: Episode 15. Format: ICPC."
     }
   ]
 }

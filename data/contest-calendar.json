@@ -1,10 +1,10 @@
 {
-  "lastSynced": "2026-11-04T22:44:17.911Z",
-  "totalCount": 20,
+  "lastSynced": "2026-11-11T23:34:39.129Z",
+  "totalCount": 17,
   "counts": {
-    "codechef": 3,
+    "codechef": 2,
     "leetcode": 2,
-    "codeforces": 8,
+    "codeforces": 6,
     "atcoder": 7
   },
   "contests": [
@@ -21,20 +21,6 @@
       "type": "ABC Round",
       "url": "https://atcoder.jp/contests/abc479",
       "description": "Official AtCoder Contest: AtCoder Beginner Contest 479."
-    },
-    {
-      "id": "at_abc480",
-      "platform": "atcoder",
-      "platformName": "AtCoder",
-      "title": "AtCoder Talent Quest 〜 今から28卒には脱出してもらいます〜予選 #2（AtCoder Beginner Contest 480）",
-      "startTime": "2026-10-17T12:00:00.000Z",
-      "endTime": "2026-10-17T13:40:00.000Z",
-      "durationMinutes": 100,
-      "durationLabel": "1 Hr 40 Min",
-      "rated": "~ 1999",
-      "type": "ABC Round",
-      "url": "https://atcoder.jp/contests/abc480",
-      "description": "Official AtCoder Contest: AtCoder Talent Quest 〜 今から28卒には脱出してもらいます〜予選 #2（AtCoder Beginner Contest 480）."
     },
     {
       "id": "at_abc480",
@@ -107,102 +93,46 @@
       "description": "Official AtCoder Contest: AtCoder Beginner Contest 482."
     },
     {
-      "id": "cf_2284",
+      "id": "at_abc483",
+      "platform": "atcoder",
+      "platformName": "AtCoder",
+      "title": "AtCoder Beginner Contest 483",
+      "startTime": "2026-11-07T12:00:00.000Z",
+      "endTime": "2026-11-07T13:40:00.000Z",
+      "durationMinutes": 100,
+      "durationLabel": "1 Hr 40 Min",
+      "rated": "~ 1999",
+      "type": "ABC Round",
+      "url": "https://atcoder.jp/contests/abc483",
+      "description": "Official AtCoder Contest: AtCoder Beginner Contest 483."
+    },
+    {
+      "id": "cf_2290",
       "platform": "codeforces",
       "platformName": "Codeforces",
-      "title": "Codeforces Round 1132 (Div. 2)",
-      "startTime": "2026-11-06T14:35:00.000Z",
-      "endTime": "2026-11-06T16:50:00.000Z",
+      "title": "Codeforces Round 1134 (Div. 4)",
+      "startTime": "2026-11-12T14:35:00.000Z",
+      "endTime": "2026-11-12T16:50:00.000Z",
       "durationMinutes": 135,
       "durationLabel": "2.3 Hours",
       "rated": "Rated Div 2",
-      "type": "CF",
-      "url": "https://codeforces.com/contest/2284",
-      "description": "Official Codeforces Round: Codeforces Round 1132 (Div. 2). Format: CF."
+      "type": "ICPC",
+      "url": "https://codeforces.com/contest/2290",
+      "description": "Official Codeforces Round: Codeforces Round 1134 (Div. 4). Format: ICPC."
     },
     {
-      "id": "lc_biweekly-contest-195",
+      "id": "lc_weekly-contest-528",
       "platform": "leetcode",
       "platformName": "LeetCode",
-      "title": "LeetCode Biweekly Contest 195",
-      "startTime": "2026-11-07T14:30:00.000Z",
-      "endTime": "2026-11-07T16:00:00.000Z",
-      "durationMinutes": 90,
-      "durationLabel": "90 Mins",
-      "rated": "Rated for All Users",
-      "type": "Biweekly Contest",
-      "url": "https://leetcode.com/contest/biweekly-contest-195",
-      "description": "Official LeetCode Biweekly Contest 195. 4 algorithmic problems (1 Easy, 2 Medium, 1 Hard). Penalty: 5 mins."
-    },
-    {
-      "id": "cf_2279",
-      "platform": "codeforces",
-      "platformName": "Codeforces",
-      "title": "Codeforces Round 1133 (Div. 1)",
-      "startTime": "2026-11-07T14:35:00.000Z",
-      "endTime": "2026-11-07T17:05:00.000Z",
-      "durationMinutes": 150,
-      "durationLabel": "2.5 Hours",
-      "rated": "Rated Div 1",
-      "type": "CF",
-      "url": "https://codeforces.com/contest/2279",
-      "description": "Official Codeforces Round: Codeforces Round 1133 (Div. 1). Format: CF."
-    },
-    {
-      "id": "cf_2280",
-      "platform": "codeforces",
-      "platformName": "Codeforces",
-      "title": "Codeforces Round 1133 (Div. 2)",
-      "startTime": "2026-11-07T14:35:00.000Z",
-      "endTime": "2026-11-07T17:05:00.000Z",
-      "durationMinutes": 150,
-      "durationLabel": "2.5 Hours",
-      "rated": "Rated Div 2",
-      "type": "CF",
-      "url": "https://codeforces.com/contest/2280",
-      "description": "Official Codeforces Round: Codeforces Round 1133 (Div. 2). Format: CF."
-    },
-    {
-      "id": "lc_weekly-contest-527",
-      "platform": "leetcode",
-      "platformName": "LeetCode",
-      "title": "LeetCode Weekly Contest 527",
-      "startTime": "2026-11-08T02:30:00.000Z",
-      "endTime": "2026-11-08T04:00:00.000Z",
+      "title": "LeetCode Weekly Contest 528",
+      "startTime": "2026-11-15T02:30:00.000Z",
+      "endTime": "2026-11-15T04:00:00.000Z",
       "durationMinutes": 90,
       "durationLabel": "90 Mins",
       "rated": "Rated for All Users",
       "type": "Weekly Contest",
-      "url": "https://leetcode.com/contest/weekly-contest-527",
-      "description": "Official LeetCode Weekly Contest 527. 4 algorithmic problems (1 Easy, 2 Medium, 1 Hard). Penalty: 5 mins."
-    },
-    {
-      "id": "cc_dsamonday028",
-      "platform": "codechef",
-      "platformName": "CodeChef",
-      "title": "CodeChef Monday Munch - DSA Challenge 028 (Rated)",
-      "startTime": "2026-11-09T19:00:05+05:30",
-      "endTime": "2026-11-09T22:00:05+05:30",
-      "durationMinutes": 180,
-      "durationLabel": "3 Hours",
-      "rated": "Rated for Div 2, 3 & 4",
-      "type": "Starters Round",
-      "url": "https://www.codechef.com/DSAMONDAY028",
-      "description": "Official CodeChef Contest: Monday Munch - DSA Challenge 028 (Rated) (DSAMONDAY028). Duration: 3 Hours."
-    },
-    {
-      "id": "cc_start264",
-      "platform": "codechef",
-      "platformName": "CodeChef",
-      "title": "CodeChef Starters 264",
-      "startTime": "2026-11-11T20:00:00+05:30",
-      "endTime": "2026-11-11T22:00:00+05:30",
-      "durationMinutes": 120,
-      "durationLabel": "2 Hours",
-      "rated": "Rated for Div 2, 3 & 4",
-      "type": "Starters Round",
-      "url": "https://www.codechef.com/START264",
-      "description": "Official CodeChef Contest: Starters 264 (START264). Duration: 2 Hours."
+      "url": "https://leetcode.com/contest/weekly-contest-528",
+      "description": "Official LeetCode Weekly Contest 528. 4 algorithmic problems (1 Easy, 2 Medium, 1 Hard). Penalty: 5 mins."
     },
     {
       "id": "cf_2285",
@@ -219,6 +149,20 @@
       "description": "Official Codeforces Round: Codeforces Round (Div. 2). Format: CF."
     },
     {
+      "id": "cc_dsamonday029",
+      "platform": "codechef",
+      "platformName": "CodeChef",
+      "title": "CodeChef Monday Munch - DSA Challenge 029 (Rated)",
+      "startTime": "2026-11-16T19:00:00+05:30",
+      "endTime": "2026-11-16T22:00:00+05:30",
+      "durationMinutes": 180,
+      "durationLabel": "3 Hours",
+      "rated": "Rated for Div 2, 3 & 4",
+      "type": "Starters Round",
+      "url": "https://www.codechef.com/DSAMONDAY029",
+      "description": "Official CodeChef Contest: Monday Munch - DSA Challenge 029 (Rated) (DSAMONDAY029). Duration: 3 Hours."
+    },
+    {
       "id": "cc_start265",
       "platform": "codechef",
       "platformName": "CodeChef",
@@ -231,6 +175,20 @@
       "type": "Starters Round",
       "url": "https://www.codechef.com/START265",
       "description": "Official CodeChef Contest: Starters 265 (START265). Duration: 2 Hours."
+    },
+    {
+      "id": "lc_biweekly-contest-196",
+      "platform": "leetcode",
+      "platformName": "LeetCode",
+      "title": "LeetCode Biweekly Contest 196",
+      "startTime": "2026-11-21T14:30:00.000Z",
+      "endTime": "2026-11-21T16:00:00.000Z",
+      "durationMinutes": 90,
+      "durationLabel": "90 Mins",
+      "rated": "Rated for All Users",
+      "type": "Biweekly Contest",
+      "url": "https://leetcode.com/contest/biweekly-contest-196",
+      "description": "Official LeetCode Biweekly Contest 196. 4 algorithmic problems (1 Easy, 2 Medium, 1 Hard). Penalty: 5 mins."
     },
     {
       "id": "cf_2287",
